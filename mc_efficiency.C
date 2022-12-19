@@ -5,10 +5,10 @@
   ============
 
   root
-  .L mc_efficiency_NR.C+
+  .L mc_efficiency.C+
   
-  mc_efficiency("./outputMadeTrees/mc_tree_pp17j.root", "./outputEffHists/mc_Eff_pp17j.root")
-  mc_efficiency("./outputMadeTrees/mc_tree_all.dat", "./outputEffHists/mc_Eff_all.root", 0)
+  mc_efficiency("./outputTreesMC/mc_tree_pp17j.root", "./outputEffHists/mc_Eff_pp17j.root")
+  mc_efficiency("./outputTreesMC/mc_tree_all.dat", "./outputEffHists/mc_Eff_all.root", 0)
 
 */
 
