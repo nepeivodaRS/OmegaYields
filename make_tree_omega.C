@@ -5,7 +5,7 @@
 
   aliroot -l
 
-  .L make_tree_omega_MC.C+
+  .L make_tree_omega.C+
   
   // Data
 
@@ -71,11 +71,11 @@ void InitHists(){
           nPtBinsMB, xBinsMB);
     hGenOmegaMB[i]->Sumw2();
 
-    hGenOmegaHM[i] = new TH1D(Form("hGenOmegaHM_%s", , pdgNameOmega[i]), ";  p_{T} [GeV/c]",
+    hGenOmegaHM[i] = new TH1D(Form("hGenOmegaHM_%s", pdgNameOmega[i]), ";  p_{T} [GeV/c]",
             nPtBinsHM, xBinsHM);
     hGenOmegaHM[i]->Sumw2();
 
-    hGenOmegaVHM[i] = new TH1D(Form("hGenOmegaVHM_%s", , pdgNameOmega[i]), ";  p_{T} [GeV/c]",
+    hGenOmegaVHM[i] = new TH1D(Form("hGenOmegaVHM_%s", pdgNameOmega[i]), ";  p_{T} [GeV/c]",
             nPtBinsHM, xBinsHM);
     hGenOmegaVHM[i]->Sumw2();
   }
