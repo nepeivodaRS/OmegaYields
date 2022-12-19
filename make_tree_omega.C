@@ -1,4 +1,4 @@
-#include "make_tree_omega_MC.h"
+#include "make_tree_omega.h"
 /*
   To run code:
   ============
