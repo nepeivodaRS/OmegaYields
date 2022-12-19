@@ -127,7 +127,7 @@ Int_t AcceptEvent(AliAnalysisPIDCascadeEvent* eventIn, TClonesArray* trackArrayI
 
 Bool_t CheckCascLooseCuts(AliAnalysisPIDCascade* cascade) {
   // Pt check
-  if(cascade->GetPt() < 0.15)
+  if(cascade->GetPtCasc() < 0.15)
     return kFALSE;
 
   AliAnalysisPIDCascadeV0* v0 = cascade->GetV0();
@@ -193,7 +193,7 @@ Bool_t CheckCascLooseCuts(AliAnalysisPIDCascade* cascade) {
 
 Bool_t CheckCascStandardCuts(AliAnalysisPIDCascade* cascade) {
   // Pt check
-  if(cascade->GetPt() < 0.15)
+  if(cascade->GetPtCasc() < 0.15)
     return kFALSE;
 
   AliAnalysisPIDCascadeV0* v0 = cascade->GetV0();
@@ -259,7 +259,7 @@ Bool_t CheckCascStandardCuts(AliAnalysisPIDCascade* cascade) {
 
 Bool_t CheckCascTightCuts(AliAnalysisPIDCascade* cascade) {
   // Pt check
-  if(cascade->GetPt() < 0.15)
+  if(cascade->GetPtCasc() < 0.15)
     return kFALSE;
 
   AliAnalysisPIDCascadeV0* v0 = cascade->GetV0();
@@ -415,7 +415,7 @@ return par[0] + par[1]*x[0] + par[2]*x[0]*x[0];
 }
 
 Double_t GAUSS(Double_t *x, Double_t *par){
-return par[0]*1./(TMath::Power(TMath::TwoPi, 0.5)*par[2])*exp(-0.5*(((x[0]-par[1])/par[2])*((x[0]-par[1])/par[2])));
+return par[0]*1./(TMath::Power(TMath::TwoPi(), 0.5)*par[2])*exp(-0.5*(((x[0]-par[1])/par[2])*((x[0]-par[1])/par[2])));
 }
 
 Double_t fitFunctionG(Double_t *x, Double_t *par) {
