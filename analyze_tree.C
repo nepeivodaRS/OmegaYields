@@ -1,4 +1,4 @@
-#include "analyze_tree_NR.h"
+#include "analyze_tree.h"
 
 /*
   To run code:
@@ -6,7 +6,7 @@
 
   aliroot -l
 
-  .L analyze_tree_NR.C+
+  .L analyze_tree.C+
 
   analyze_tree_MC("./outputMadeTrees/mc_tree_pp17j.root", "./outputAnalTrees/mc_analTree_pp17j.root", 0, 1)
 
@@ -228,7 +228,13 @@ void analyze_tree_MC(const Char_t* inFileName,
   hNorm->SetBinContent(4, nHM);
   hNorm->SetBinContent(5, nVHM);
 
+  TF1* fRap = new TF1("fRap", rap_correction, 0.0, 50.0, 2);
+  fRap->SetParameters(0.8, massOmega);
+
   hOmegaMB = SignalExtractionPt(nPtBinsMB, hOmegaInvMassVsPt[0], 0, 100, "PtHistOmega");
+  hOmegaMB->Scale(1./nMB);
+  NormalizeHistogram(hOmegaMB);
+  hOmegaMB->Divide(fRap);
 
   WriteToFile(outFile);
 }
