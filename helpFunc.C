@@ -431,6 +431,7 @@ TH1D* SignalExtractionPt(const Double_t *xPtBins, TH3D *invMassHist, Int_t leftC
   outHist->Sumw2();
   invMassHist->GetZaxis()->SetRange(leftCentr, rightCentr);
   TH2D* hProfileInvMassZ = static_cast<TH2D*>(invMassHist->Project3D("xy"));
+  hProfileInvMassZ->Draw();
 
   for(Int_t i = 0; i < sizeof(xPtBins) / sizeof(Double_t) - 1; ++i) {
     TH1D* hProfileInvMassY = hProfileInvMassZ->ProjectionY("_py", i, i+1);
@@ -443,6 +444,7 @@ TH1D* SignalExtractionPt(const Double_t *xPtBins, TH3D *invMassHist, Int_t leftC
     hProfileInvMassY->Fit("fitFcn","ep");
     Double_t par[6];
     fitFcn->GetParameters(par);
+    std::cout << par << std::endl;
     // gROOT->SetBatch(kTRUE);
     outHist->Fill((xPtBins[i] + xPtBins[i+1])/2., par[3]); // Fill histogram with fitted signal integral
     // TF1 *backFcn = new TF1("backFcn",background,-0.03,0.03,3);
