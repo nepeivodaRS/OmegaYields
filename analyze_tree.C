@@ -10,7 +10,7 @@
 
   analyze_tree_MC("./outputMadeTrees/mc_tree_pp17j.root", "./outputAnalTrees/mc_analTree_pp17j.root", 0, 1)
 
-  analyze_tree_MC("./outputTreesMC/mc_tree_all.dat", "./outputAnal/mc_analTree_all.root", 0, 1)
+  analyze_tree_MC("./outputTreesMC/mc_tree_all.dat", "./outputAnal/mc_anal_test.root", 0, 1)
   analyze_tree_MC("./outputMadeTreesData/tree_all.dat", "./outputAnal/analTreeData_all.root", 0, 0)
 */
 
@@ -230,7 +230,7 @@ void analyze_tree_MC(const Char_t* inFileName,
   TF1* fRap = new TF1("fRap", rap_correction, 0.0, 50.0, 2);
   fRap->SetParameters(0.8, massOmega);
 
-  hOmegaMB = SignalExtractionPt(xBinsMB, hOmegaInvMassVsPt[0], 0, 10, "PtHistOmega");
+  hOmegaMB = SignalExtractionPt(xBinsMB, nPtBinsMB, hOmegaInvMassVsPt[0], 0, 10, "PtHistOmega");
   hOmegaMB->Scale(1./nMB);
   NormalizeHistogram(hOmegaMB);
   hOmegaMB->Divide(fRap);
