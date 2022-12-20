@@ -10,7 +10,7 @@
 
   analyze_tree_MC("./outputMadeTrees/mc_tree_pp17j.root", "./outputAnalTrees/mc_analTree_pp17j.root", 0, 1)
 
-  analyze_tree_MC("./outputTreesMC/mc_tree_all.dat", "./outputAnal/mc_anal_test.root", 0, 1)
+  analyze_tree_MC("./outputTreesMC/mc_tree_all.dat", "./outputAnal/mc_anal.root", 0, 1)
   analyze_tree_MC("./outputMadeTreesData/tree_all.dat", "./outputAnal/analTreeData_all.root", 0, 0)
 */
 
@@ -26,13 +26,13 @@ void InitHists(){
   //      nPtBinsMB, xBinsMB);
   // hOmegaMB->Sumw2();
 
-  hOmegaHM = new TH1D("hOmegaHM", "; p_{T} [GeV/c]",
-       nPtBinsHM, xBinsHM);
-  hOmegaHM->Sumw2();
+  // hOmegaHM = new TH1D("hOmegaHM", "; p_{T} [GeV/c]",
+  //      nPtBinsHM, xBinsHM);
+  // hOmegaHM->Sumw2();
   
-  hOmegaVHM = new TH1D("hOmegaVHM", "; p_{T} [GeV/c]",
-        nPtBinsHM, xBinsHM);
-  hOmegaVHM->Sumw2();
+  // hOmegaVHM = new TH1D("hOmegaVHM", "; p_{T} [GeV/c]",
+  //       nPtBinsHM, xBinsHM);
+  // hOmegaVHM->Sumw2();
 
   hGenOmegaMB = new TH1D("hGenOmegaMB", ";  p_{T} [GeV/c]",
         nPtBinsMB, xBinsMB);
@@ -46,8 +46,9 @@ void InitHists(){
           nPtBinsHM, xBinsHM);
   hGenOmegaVHM->Sumw2();
 
-  PtHistList->Add(hOmegaHM);
-  PtHistList->Add(hOmegaVHM);
+  // PtHistList->Add(hOmegaMB);
+  // PtHistList->Add(hOmegaHM);
+  // PtHistList->Add(hOmegaVHM);
 
   PtHistList->Add(hGenOmegaMB);
   PtHistList->Add(hGenOmegaHM);
@@ -213,29 +214,5 @@ void analyze_tree_MC(const Char_t* inFileName,
       }
     }
   }
-
-  // TH1D* hVtxStatus = (TH1D*)inFile->Get("hVtxStatus");
-  
-  // if(maxEvents == 0)
-  //   R__ASSERT(TMath::Nint(hVtxStatus->GetBinContent(3)) == nMB);
-  
-  // TH1D* hNorm = new TH1D("hNorm", "MB: No vtx=-1, vtx rej=0, N MB=1, N HM=2, N VHM=3",
-  //      5, -1.5, 3.5);
-  // hNorm->SetBinContent(1, hVtxStatus->GetBinContent(1));
-  // hNorm->SetBinContent(2, hVtxStatus->GetBinContent(2));
-  // hNorm->SetBinContent(3, nMB);
-  // hNorm->SetBinContent(4, nHM);
-  // hNorm->SetBinContent(5, nVHM);
-
-  TF1* fRap = new TF1("fRap", rap_correction, 0.0, 50.0, 2);
-  fRap->SetParameters(0.8, massOmega);
-
-  hOmegaMB = SignalExtractionPt(xBinsMB, nPtBinsMB, hOmegaInvMassVsPt[0], 0, 10, "PtHistOmega");
-  hOmegaMB->Scale(1./nMB);
-  NormalizeHistogram(hOmegaMB);
-  hOmegaMB->Divide(fRap);
-
-  PtHistList->Add(hOmegaMB);
-
   WriteToFile(outFile);
 }
