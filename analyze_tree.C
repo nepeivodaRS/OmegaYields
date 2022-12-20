@@ -58,7 +58,7 @@ void InitHists(){
 
   for(Int_t i = 0; i < nSpecies; i++) {
     hOmegaInvMassVsPt[i] = new TH3D(Form("hOmegaInvMassVsPt_%s", pdgNameOmega[i]), "M_{inv} vs p_{T}; p_{T}^{casc} [GeV/c]; M_{inv} - M_{#Omega} [GeV/c^{2}]; Centrality V0M",
-            nPtBins, xBins, nMinvBins, minvBins, nCentrBins, xCentrBins);
+            nPtBinsMB, xBinsMB, nMinvBins, minvBins, nCentrBins, xCentrBins);
     hOmegaInvMassVsPt[i]->Sumw2();
 
     InvMassList->Add(hOmegaInvMassVsPt[i]);
@@ -205,7 +205,7 @@ void analyze_tree_MC(const Char_t* inFileName,
         const Double_t dMassOmega     = cascade->GetIMO() - massOmega;
         Int_t bin = 1;
         if(cascade->GetCharge() < 0){bin = 0;}
-        hOmegaInvMassVsPt[SigType]->Fill(cascade->GetPtCasc(), dMassOmega, event->GetV0Mmultiplicity());
+        hOmegaInvMassVsPt[bin]->Fill(cascade->GetPtCasc(), dMassOmega, event->GetV0Mmultiplicity());
       }
 
       bPassedTight = CheckCascTightCuts(cascade);
@@ -215,23 +215,23 @@ void analyze_tree_MC(const Char_t* inFileName,
     }
   }
 
-  TH1D* hVtxStatus = (TH1D*)inFile->Get("hVtxStatus");
+  // TH1D* hVtxStatus = (TH1D*)inFile->Get("hVtxStatus");
   
-  if(maxEvents == 0)
-    R__ASSERT(TMath::Nint(hVtxStatus->GetBinContent(3)) == nMB);
+  // if(maxEvents == 0)
+  //   R__ASSERT(TMath::Nint(hVtxStatus->GetBinContent(3)) == nMB);
   
-  TH1D* hNorm = new TH1D("hNorm", "MB: No vtx=-1, vtx rej=0, N MB=1, N HM=2, N VHM=3",
-       5, -1.5, 3.5);
-  hNorm->SetBinContent(1, hVtxStatus->GetBinContent(1));
-  hNorm->SetBinContent(2, hVtxStatus->GetBinContent(2));
-  hNorm->SetBinContent(3, nMB);
-  hNorm->SetBinContent(4, nHM);
-  hNorm->SetBinContent(5, nVHM);
+  // TH1D* hNorm = new TH1D("hNorm", "MB: No vtx=-1, vtx rej=0, N MB=1, N HM=2, N VHM=3",
+  //      5, -1.5, 3.5);
+  // hNorm->SetBinContent(1, hVtxStatus->GetBinContent(1));
+  // hNorm->SetBinContent(2, hVtxStatus->GetBinContent(2));
+  // hNorm->SetBinContent(3, nMB);
+  // hNorm->SetBinContent(4, nHM);
+  // hNorm->SetBinContent(5, nVHM);
 
   TF1* fRap = new TF1("fRap", rap_correction, 0.0, 50.0, 2);
   fRap->SetParameters(0.8, massOmega);
 
-  hOmegaMB = SignalExtractionPt(nPtBinsMB, hOmegaInvMassVsPt[0], 0, 100, "PtHistOmega");
+  hOmegaMB = SignalExtractionPt(xBinsMB, hOmegaInvMassVsPt[0], 0, 10, "PtHistOmega");
   hOmegaMB->Scale(1./nMB);
   NormalizeHistogram(hOmegaMB);
   hOmegaMB->Divide(fRap);
