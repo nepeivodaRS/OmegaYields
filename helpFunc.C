@@ -430,7 +430,7 @@ TH1D* SignalExtractionPt(const Double_t *xPtBins, TH3D *invMassHist, Int_t leftC
   TH1D* outHist = new TH1D(histName, "; p_{T} [GeV/c]", sizeof(xPtBins) / sizeof(Double_t), xPtBins);
   outHist->Sumw2();
   invMassHist->GetZaxis()->SetRange(leftCentr, rightCentr);
-  TH2D* hProfileInvMassZ = invMassHist->Project3D(option = "xy");
+  TH2D* hProfileInvMassZ = invMassHist->Project3D("xy");
 
   for(Int_t i = 0; i < sizeof(xPtBins) / sizeof(Double_t) - 1; ++i) {
     TH1D* hProfileInvMassY = hProfileInvMassZ->ProjectionY("_py", i, i+1);
