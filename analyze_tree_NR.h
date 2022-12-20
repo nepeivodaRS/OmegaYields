@@ -34,9 +34,11 @@ TH1D* hGenOmegaVHM;
 
 Int_t nMB = 0, nHM = 0, nVHM = 0;
 
-// Inv mass 2d hists
-TH3D *hOmegaInvMassVsPt[nSignalTypes] = { 0 };
-TH3D *hLambdaInvMassVsPt[nSignalTypes] = { 0 };
+const Int_t nSpecies = 2;
+const Char_t * pdgNameOmega[nSpecies] = {"Omega", "OmegaBar"};
+
+// Inv mass 3d hist
+TH3D *hOmegaInvMassVsPt[nSpecies] = { 0 };
 
 // Binning used
 const Int_t nPtBins = 19;

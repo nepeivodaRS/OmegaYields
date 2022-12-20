@@ -22,9 +22,9 @@ void InitHists(){
 
   PtHistList = new TList();
 
-  hOmegaMB = new TH1D("hOmegaMB", "; p_{T} [GeV/c]",
-       nPtBinsMB, xBinsMB);
-  hOmegaMB->Sumw2();
+  // hOmegaMB = new TH1D("hOmegaMB", "; p_{T} [GeV/c]",
+  //      nPtBinsMB, xBinsMB);
+  // hOmegaMB->Sumw2();
 
   hOmegaHM = new TH1D("hOmegaHM", "; p_{T} [GeV/c]",
        nPtBinsHM, xBinsHM);
@@ -56,17 +56,12 @@ void InitHists(){
 
   InvMassList = new TList();
 
-  for(Int_t i = 0; i < nSignalTypes; i++) {
-    hOmegaInvMassVsPt[i] = new TH3D(Form("hOmegaInvMassVsPt_%s", SignalTypeName[i]), "M_{inv} vs p_{T}; p_{T}^{casc} [GeV/c]; M_{inv} - M_{#Omega} [GeV/c^{2}]; Centrality V0M",
+  for(Int_t i = 0; i < nSpecies; i++) {
+    hOmegaInvMassVsPt[i] = new TH3D(Form("hOmegaInvMassVsPt_%s", pdgNameOmega[i]), "M_{inv} vs p_{T}; p_{T}^{casc} [GeV/c]; M_{inv} - M_{#Omega} [GeV/c^{2}]; Centrality V0M",
             nPtBins, xBins, nMinvBins, minvBins, nCentrBins, xCentrBins);
     hOmegaInvMassVsPt[i]->Sumw2();
 
-    hLambdaInvMassVsPt[i] = new TH3D(Form("hLambdaInvMassVsPt_%s", SignalTypeName[i]), "M_{inv} vs p_{T}; p_{T}^{V0} [GeV/c]; M_{inv} - M_{#Lambda} [GeV/c^{2}]; Centrality V0M",
-            nPtBins, xBins, nMinvBins, minvBins, nCentrBins, xCentrBins);
-    hLambdaInvMassVsPt[i]->Sumw2();
-
     InvMassList->Add(hOmegaInvMassVsPt[i]);
-    InvMassList->Add(hLambdaInvMassVsPt[i]);
   }
 
   hEventStat = new TH1I("hEventStat","",3,0,3);
@@ -77,7 +72,6 @@ void InitHists(){
 void WriteToFile(TFile* outFile){
   // Write to file
   outFile->cd();
-
   outFile->WriteObject(PtHistList, "ListOfPtHists");
   outFile->WriteObject(InvMassList, "ListOfEInvMassHists");
   outFile->WriteObject(hEventStat, "EventStatistics");
@@ -159,7 +153,7 @@ void analyze_tree_MC(const Char_t* inFileName,
           hGenOmegaVHM->Fill(trackMC->GetPt());
       }
     }
-/////////////////
+
     const Int_t nCascades = allCascades->GetEntries();
 
     for(Int_t i = 0; i < nCascades; i++) {
@@ -183,24 +177,12 @@ void analyze_tree_MC(const Char_t* inFileName,
 
       hCascStat->Fill("M_{#Omega} check", 1);
 
-      Double_t weight = 0;
-      if(TMath::Abs(deltaM) < 0.01)
-        weight = 1;
-      else if(TMath::Abs(deltaM) < 0.02)
-        weight = -1;
-      else
-        weight = 0; // weight = 0;
-
-      FillCutHists(2, cascade, event); // Fill for all cascades
-
       if(isMC){
         bIsRealOmegaCascade = IsRealOmegaCascade(cascade);
         if(bIsRealOmegaCascade){
-          FillCutHists(0, cascade, event); // real omega cascade
           hCascStat->Fill("Gen #Omega", 1);
         }
         else{
-          FillCutHists(1, cascade, event); // background cascades
           hCascStat->Fill("Not #Omega", 1);
         }
       }
@@ -216,54 +198,37 @@ void analyze_tree_MC(const Char_t* inFileName,
         continue;
 
       hCascStat->Fill("Loose", 1);
-      FillCutHists(3, cascade, event); // Passed Loose cuts
-      if(!bIsRealOmegaCascade){
-        FillCutHists(4, cascade, event); // Passed Loose cuts but fake
-      }
-      else{
-        FillCutHists(5, cascade, event); // Passed Loose cuts and real
-      }
 
       bPassedStandard = CheckCascStandardCuts(cascade);
-
       if(bPassedStandard){
         hCascStat->Fill("Standart", 1);
-        FillCutHists(6, cascade, event); // Passed Standard cuts
-        if(!bIsRealOmegaCascade){
-          FillCutHists(7, cascade, event); // Passed Standard cuts but fake
-        }
-        else{
-          FillCutHists(8, cascade, event); // Passed Standard cuts and real
-        }
-        // Pt histograms
-        hOmegaMB->Fill(cascade->GetPtCasc(), weight);
-        if(HMevent == kTRUE)
-          hOmegaHM->Fill(cascade->GetPtCasc(), weight);
-        if(VHMevent == kTRUE)
-          hOmegaVHM->Fill(cascade->GetPtCasc(), weight);
+        const Double_t dMassOmega     = cascade->GetIMO() - massOmega;
+        Int_t bin = 1;
+        if(cascade->GetCharge() < 0){bin = 0;}
+        hOmegaInvMassVsPt[SigType]->Fill(cascade->GetPtCasc(), dMassOmega, event->GetV0Mmultiplicity());
       }
 
       bPassedTight = CheckCascTightCuts(cascade);
-
       if(bPassedTight){
         hCascStat->Fill("Tight", 1);
-        FillCutHists(9, cascade, event); // Passed Tight cuts
-        if(!bIsRealOmegaCascade){
-          FillCutHists(10, cascade, event); // Passed Tight cuts but fake
-        }
-        else{
-          FillCutHists(11, cascade, event); // Passed Tight cuts and real
-        }
       }
     }
   }
 
-  // Rapidity correction
-  TF1* fRap = new TF1("fRap", rap_correction, 0.0, 50.0, 2);
-  fRap->SetParameters(0.8, massOmega);
+  TH1D* hVtxStatus = (TH1D*)inFile->Get("hVtxStatus");
   
-  hOmegaMBmc->Scale(1./nMB);
-  NormalizeHistogram(hOmegaMBmc);
-  hOmegaMBmc->Divide(fRap);
+  if(maxEvents == 0)
+    R__ASSERT(TMath::Nint(hVtxStatus->GetBinContent(3)) == nMB);
+  
+  TH1D* hNorm = new TH1D("hNorm", "MB: No vtx=-1, vtx rej=0, N MB=1, N HM=2, N VHM=3",
+       5, -1.5, 3.5);
+  hNorm->SetBinContent(1, hVtxStatus->GetBinContent(1));
+  hNorm->SetBinContent(2, hVtxStatus->GetBinContent(2));
+  hNorm->SetBinContent(3, nMB);
+  hNorm->SetBinContent(4, nHM);
+  hNorm->SetBinContent(5, nVHM);
+
+  hOmegaMB = SignalExtractionPt(nPtBinsMB, hOmegaInvMassVsPt[0], 0, 100, "PtHistOmega");
+
   WriteToFile(outFile);
 }

@@ -390,22 +390,22 @@ void NormalizeHistogram(TH1D* hist){
   }  
 }
 
-Double_t DoubleSidedCB2(double x, double mu, double width, double a1, double p1, double a2, double p2)
+Double_t DoubleSidedCB2(Double_t x, Double_t mu, Double_t width, Double_t a1, Double_t p1, Double_t a2, Double_t p2)
 {
-  double u   = (x-mu)/width;
-  double A1  = TMath::Power(p1/TMath::Abs(a1),p1)*TMath::Exp(-a1*a1/2);
-  double A2  = TMath::Power(p2/TMath::Abs(a2),p2)*TMath::Exp(-a2*a2/2);
-  double B1  = p1/TMath::Abs(a1) - TMath::Abs(a1);
-  double B2  = p2/TMath::Abs(a2) - TMath::Abs(a2);
+  Double_t u   = (x-mu)/width;
+  Double_t A1  = TMath::Power(p1/TMath::Abs(a1),p1)*TMath::Exp(-a1*a1/2);
+  Double_t A2  = TMath::Power(p2/TMath::Abs(a2),p2)*TMath::Exp(-a2*a2/2);
+  Double_t B1  = p1/TMath::Abs(a1) - TMath::Abs(a1);
+  Double_t B2  = p2/TMath::Abs(a2) - TMath::Abs(a2);
 
-  double result(1);
+  Double_t result(1);
   if      (u<-a1) result *= A1*TMath::Power(B1-u,-p1);
   else if (u<a2)  result *= TMath::Exp(-u*u/2);
   else            result *= A2*TMath::Power(B2+u,-p2);
   return result;
 }
 
-double DoubleSidedCB(double* x, double *par)
+Double_t DoubleSidedCB(Double_t* x, Double_t *par)
 {
   return(par[0] * DoubleSidedCB2(x[0], par[1],par[2],par[3],par[4],par[5],par[6]));
 }
@@ -424,6 +424,44 @@ Double_t fitFunctionG(Double_t *x, Double_t *par) {
 
 Double_t fitFunctionCB(Double_t *x, Double_t *par) {
   return background(x,par) + DoubleSidedCB(x,&par[3]);
+}
+
+TH1D* SignalExtractionPt(const Double_t *xPtBins, TH3D *invMassHist, Double_t leftCentr, Double_t rightCentr, const Char_t* histName){
+  TH1D* outHist = new TH1D(histName, "; p_{T} [GeV/c]", sizeof(xPtBins) / sizeof(Double_t), xPtBins);
+  outHist->Sumw2();
+
+  TH2D* hProfileInvMassZ = invMassHist->ProjectionZ(leftCentr, rightCentr);
+
+  for(Int_t i = 0; i < sizeof(xPtBins) / sizeof(Double_t) - 1; ++i) {
+    TH1D* hProfileInvMassY = hProfileInvMassZ->ProjectionY(xPtBins[i], xPtBins[i+1]);
+    gROOT->SetBatch(kFALSE);
+    TF1 *fitFcn = new TF1("fitFcn",fitFunctionG,-0.03, 0.03,6);
+    fitFcn->SetParameters(182,1,1,1200,0,0.001);
+    fitFcn->SetNpx(1e4);
+    // hProfileInvMass->SetTitle("#Omega InvMass Fit");
+    // hProfileInvMass->SetMinimum(-10);
+    hProfileInvMassY->Fit("fitFcn","ep");
+    Double_t par[6];
+    fitFcn->GetParameters(par);
+    gROOT->SetBatch(kTRUE);
+    outHist->Fill((xPtBins[i] + xPtBins[i+1])/2., par[3]); // Fill histogram with fitted signal integral
+    // TF1 *backFcn = new TF1("backFcn",background,-0.03,0.03,3);
+    // TF1 *signalFcn = new TF1("signalFcn",GAUSS,-0.03,0.03,3);
+    
+    // signalFcn->SetNpx(1e3);
+    // Double_t par[6];
+    // fitFcn->GetParameters(par);
+
+    // backFcn->SetParameters(par);
+    // backFcn->SetLineStyle(2);
+    // backFcn->SetLineColor(8);
+    // backFcn->Draw("same");
+
+    // signalFcn->SetLineColor(kMagenta+1);
+    // signalFcn->SetParameters(&par[3]);
+    // signalFcn->Draw("same");
+  }
+  return outHist;
 }
 
 
