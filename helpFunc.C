@@ -426,15 +426,14 @@ Double_t fitFunctionCB(Double_t *x, Double_t *par) {
   return background(x,par) + DoubleSidedCB(x,&par[3]);
 }
 
-TH1D* SignalExtractionPt(const Double_t *xPtBins, TH3D *invMassHist, Int_t leftCentr, Int_t rightCentr, const Char_t* histName){
+TH1D* SignalExtractionPt(const Double_t *xPtBins, const Int_t nPtBins, TH3D *invMassHist, Int_t leftCentr, Int_t rightCentr, const Char_t* histName){
   TH1D* outHist = new TH1D(histName, "; p_{T} [GeV/c]", sizeof(xPtBins) / sizeof(Double_t), xPtBins);
   outHist->Sumw2();
   invMassHist->GetZaxis()->SetRange(leftCentr, rightCentr);
   TH2D* hProfileInvMassZ = static_cast<TH2D*>(invMassHist->Project3D("xy"));
   hProfileInvMassZ->Draw();
-  std::cout << sizeof(*xPtBins) / sizeof(Double_t) << std::endl;
 
-  for(Int_t i = 0; i < sizeof(*xPtBins) / sizeof(Double_t) - 1; ++i) {
+  for(Int_t i = 0; i < nPtBins - 1; ++i) {
     TH1D* hProfileInvMassY = hProfileInvMassZ->ProjectionY("_py", i, i+1);
     //gROOT->SetBatch(kFALSE);
     TF1 *fitFcn = new TF1("fitFcn",fitFunctionG,-0.03, 0.03,6);
