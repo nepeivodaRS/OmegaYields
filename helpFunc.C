@@ -430,10 +430,10 @@ TH1D* SignalExtractionPt(const Double_t *xPtBins, TH3D *invMassHist, Int_t leftC
   TH1D* outHist = new TH1D(histName, "; p_{T} [GeV/c]", sizeof(xPtBins) / sizeof(Double_t), xPtBins);
   outHist->Sumw2();
 
-  TH2D* hProfileInvMassZ = invMassHist->ProjectionZ(leftCentr, rightCentr);
+  TH2D* hProfileInvMassZ = invMassHist->ProjectionZ("_pz", leftCentr, rightCentr);
 
   for(Int_t i = 0; i < sizeof(xPtBins) / sizeof(Double_t) - 1; ++i) {
-    TH1D* hProfileInvMassY = hProfileInvMassZ->ProjectionY(i, i+1);
+    TH1D* hProfileInvMassY = hProfileInvMassZ->ProjectionY("_py", i, i+1);
     gROOT->SetBatch(kFALSE);
     TF1 *fitFcn = new TF1("fitFcn",fitFunctionG,-0.03, 0.03,6);
     fitFcn->SetParameters(182,1,1,1200,0,0.001);
