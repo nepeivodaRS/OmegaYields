@@ -46,7 +46,6 @@ void InitHists(){
           nPtBinsHM, xBinsHM);
   hGenOmegaVHM->Sumw2();
 
-  PtHistList->Add(hOmegaMB);
   PtHistList->Add(hOmegaHM);
   PtHistList->Add(hOmegaVHM);
 
@@ -235,6 +234,8 @@ void analyze_tree_MC(const Char_t* inFileName,
   hOmegaMB->Scale(1./nMB);
   NormalizeHistogram(hOmegaMB);
   hOmegaMB->Divide(fRap);
+
+  PtHistList->Add(hOmegaMB);
 
   WriteToFile(outFile);
 }
