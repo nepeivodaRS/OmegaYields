@@ -432,6 +432,7 @@ TH1D* SignalExtractionPt(const Double_t *xPtBins, TH3D *invMassHist, Int_t leftC
   invMassHist->GetZaxis()->SetRange(leftCentr, rightCentr);
   TH2D* hProfileInvMassZ = static_cast<TH2D*>(invMassHist->Project3D("xy"));
   hProfileInvMassZ->Draw();
+  std::cout << sizeof(*xPtBins) / sizeof(Double_t) << std::endl;
 
   for(Int_t i = 0; i < sizeof(*xPtBins) / sizeof(Double_t) - 1; ++i) {
     TH1D* hProfileInvMassY = hProfileInvMassZ->ProjectionY("_py", i, i+1);
