@@ -365,3 +365,34 @@ TChain* ReadChainFromFile(const char *fileIn, const char *treeName, const char *
 
   return chain;
 }
+
+TH1I* ReadHistoFromFile(const char *fileIn, const char *histoName, const char *fName, Int_t maxFiles = -1, Int_t startFile = 0){
+  // Create the outhisto
+  TH1I* outHisto = new TH1I(histoName);
+  // Open the input stream
+  ifstream in;
+  in.open(fileIn);
+  // Read the input list of files and add them to the chain
+  TString currentFile;
+  Int_t counter=0;
+  while(in.good()) {
+        in >> currentFile;
+    if (fName) {
+      currentFile+="#";
+      currentFile+=fName;
+    }
+    if (!currentFile.Contains("root")) continue; // protection
+    counter++;
+    if (counter<startFile) continue;
+    if (maxFiles>0 && counter>maxFiles+startFile) break;
+    TFile * f = FindFile(currentFile.Data());
+    if (f){
+      outHisto->Add((TH1I*)f->Get("hVtxStatus"));
+    }
+    delete f;
+  }
+
+  in.close();
+
+  return outHisto;
+}

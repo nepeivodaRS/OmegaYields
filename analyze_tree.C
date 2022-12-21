@@ -8,7 +8,7 @@
 
   .L analyze_tree.C+
 
-  analyze_tree_MC("./outputTreesMC/mc_tree_all.dat", "./outputAnal/mc_anal.root", 0, 1)
+  analyze_tree_MC("./outputTreesMC/mc_tree_all.dat", "./outputAnal/mc_anal_corrected.root", 0, 1)
 */
 
 void InitHists(){
@@ -85,7 +85,7 @@ void analyze_tree_MC(const Char_t* inFileName,
   // Open the input file and set up the classes.
   if(strstr(inFileName, ".dat")) {
     tree = ReadChainFromFile(inFileName, "tree", 0);
-    hVtxStatus = ReadChainFromFile(inFileName, "hVtxStatus", 0);
+    hVtxStatus = ReadHistoFromFile(inFileName, "hVtxStatus", 0);
   } else {
     TFile* inFile = TFile::Open(inFileName);
     if(!inFile){
