@@ -68,20 +68,21 @@ Double_t fitFunctionCB(Double_t *x, Double_t *par) {
   return background(x,par) + DoubleSidedCB(x,&par[3]);
 }
 
-void SignalExtractionPt(const Double_t *xPtBins, const Int_t nPtBins, TH3D *invMassHist, Int_t leftCentr, Int_t rightCentr, TH1D* inHist, const Char_t* outputDirName){
-  TFile f(Form("%s/PtFitHists.root", outputDirName),"RECREATE");
+void SignalExtractionPt(const Double_t *xPtBins, const Int_t nPtBins, TH3D *invMassHist, Int_t leftCentr, Int_t rightCentr, TH1D* inHist, TFile* outFile){
+  TDirectory* dir = outFile->mkdir(Form("PtFitHists_%s", invMassHist->GetName()));
+  dir->cd();
   invMassHist->GetZaxis()->SetRange(leftCentr, rightCentr);
   TH2D* hProfileInvMassZ = static_cast<TH2D*>(invMassHist->Project3D("xy"));
   for(Int_t i = 0; i < nPtBins - 1; ++i) {
     gROOT->SetBatch(kFALSE);
     TH1D* hProfileInvMassX = hProfileInvMassZ->ProjectionX("_px", i, i+1);
     hProfileInvMassX->SetStats(0);
-    hProfileInvMassX->SetTitle(Form("M_{inv} vs Pt Fit in %d bin",  i));
+    hProfileInvMassX->SetTitle(Form("M_{inv} in pt bins fit, %d bin",  i+1));
     TF1 *fitFcn = new TF1("fitFcn",fitFunctionG,-0.03, 0.03,6);
     fitFcn->SetParameters(1,1,1,20,0,0.001);
     fitFcn->SetNpx(1e4);
     gROOT->SetBatch(kTRUE);
-    TCanvas *c1 = new TCanvas(Form("PtFit_%d", i),"PtHist",10,10,1200,900);
+    TCanvas *c1 = new TCanvas(Form("PtFit_%d", i+1),"PtHist",10,10,1200,900);
     c1->cd();
     TFitResultPtr FitResult = hProfileInvMassX->Fit("fitFcn","epS");
     Double_t par[6];
@@ -107,7 +108,7 @@ void SignalExtractionPt(const Double_t *xPtBins, const Int_t nPtBins, TH3D *invM
     signalFcn->Draw("same");
 
     TLegend *legend=new TLegend(0.6,0.65,0.88,0.85);
-    legend->SetTextFont(60);
+    legend->SetTextFont(42);
     legend->SetTextSize(0.03);
     legend->SetLineColorAlpha(0.,0.);
     legend->SetFillColorAlpha(0.,0.);
@@ -115,10 +116,17 @@ void SignalExtractionPt(const Double_t *xPtBins, const Int_t nPtBins, TH3D *invM
     legend->AddEntry(backFcn,"pol2 background fit","l");
     legend->AddEntry(signalFcn,"gauss signal fit","l");
     legend->AddEntry(fitFcn,"global Fit","l");
-    legend->Draw();
+    legend->Draw("same");
+
+    TLatex ptRange;
+    ptRange.SetTextSize(0.03);
+    ptRange.SetTextFont(42);
+    ptRange.SetNDC();
+    ptRange.DrawLatex(0.194491, 0.74, Form("%.2f < p_{T} < %.2f", xPtBins[i], xPtBins[i+1]));
+    c1->Update();
     c1->Write();
   }
-  f.Close();
+  dir->cd("/");
 }
 
 void WriteToFile(TFile* outFile){
@@ -142,7 +150,7 @@ void make_results(const Char_t* fileNameData, const Char_t* outputDir){
   TH1D* hOmegaMB = new TH1D("hOmegaMB", "; p_{T} [GeV/c]", nPtBinsMB, xBinsMB);
   hOmegaMB->Sumw2();
 
-  SignalExtractionPt(xBinsMB, nPtBinsMB, hInvMassOmega, 1, 11, hOmegaMB, outputDir); // 1 - 11
+  SignalExtractionPt(xBinsMB, nPtBinsMB, hInvMassOmega, 1, 11, hOmegaMB, outFile); // 1 - 11
   // hOmegaMB->Scale(1./nMB);
   // NormalizeHistogram(hOmegaMB);
   // Eff

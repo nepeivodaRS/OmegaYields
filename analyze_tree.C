@@ -8,10 +8,7 @@
 
   .L analyze_tree.C+
 
-  analyze_tree_MC("./outputMadeTrees/mc_tree_pp17j.root", "./outputAnalTrees/mc_analTree_pp17j.root", 0, 1)
-
   analyze_tree_MC("./outputTreesMC/mc_tree_all.dat", "./outputAnal/mc_anal.root", 0, 1)
-  analyze_tree_MC("./outputMadeTreesData/tree_all.dat", "./outputAnal/analTreeData_all.root", 0, 0)
 */
 
 void InitHists(){
