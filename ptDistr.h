@@ -43,6 +43,7 @@ Double_t xBinsHM[nPtBinsHM+1] = {1.00, 1.40, 1.80, 2.30, 2.80, 3.30, 3.80, 4.80}
 TCanvas * c1 = 0;
 
 TList *PtHistList;
+TList *ListOfPtHists;
 TFile* outFile;
 TFile* fileEff;
 

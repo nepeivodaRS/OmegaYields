@@ -7,7 +7,7 @@
   root
   .L mc_efficiency.C+
 
-  mc_efficiency("./outputTreesMC/mc_tree_all.dat", "./outputEff/mc_Eff_all.root", 0)
+  mc_efficiency("./outputTreesMC/mc_tree_all.dat", "./outputEff/mc_Eff_sameBinning.root", 0)
 
 */
 
@@ -162,7 +162,7 @@ void mc_efficiency(const Char_t* inFileName,
       hCascStat->Fill("#Xi check", 1);
 
       const Double_t deltaM     = cascade->GetIMO() - massOmega;
-      if(TMath::Abs(deltaM) > 0.1)
+      if(TMath::Abs(deltaM) > 0.029999999)
         continue;
 
       hCascStat->Fill("M_{#Omega} check", 1);

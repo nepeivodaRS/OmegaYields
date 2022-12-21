@@ -8,7 +8,7 @@
 
   .L analyze_tree.C+
 
-  analyze_tree_MC("./outputTreesMC/mc_tree_all.dat", "./outputAnal/mc_anal_corrected.root", 0, 1)
+  analyze_tree_MC("./outputTreesMC/mc_tree_all.dat", "./outputAnal/mc_anal_sameBinning.root", 0, 1)
 */
 
 void InitHists(){
@@ -176,7 +176,7 @@ void analyze_tree_MC(const Char_t* inFileName,
       hCascStat->Fill("#Xi check", 1);
 
       const Double_t deltaM     = cascade->GetIMO() - massOmega;
-      if(TMath::Abs(deltaM) > 0.1)
+      if(TMath::Abs(deltaM) > 0.029999999)
         continue;
 
       hCascStat->Fill("M_{#Omega} check", 1);
