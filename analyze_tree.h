@@ -75,6 +75,8 @@ TH1I* hCascStat;
 
 TH1D* hVtxStatus;
 
+TH1D* hNorm;
+
 TList *PtHistList;
 TList *InvMassList;
 

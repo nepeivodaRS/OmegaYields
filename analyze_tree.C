@@ -73,7 +73,7 @@ void WriteToFile(TFile* outFile){
   outFile->WriteObject(InvMassList, "ListOfEInvMassHists");
   outFile->WriteObject(hEventStat, "EventStatistics");
   outFile->WriteObject(hCascStat, "hCascStat");
-
+  outFile->WriteObject(hNorm, "hNorm");
   outFile->Close();
 }
 
@@ -219,7 +219,7 @@ void analyze_tree_MC(const Char_t* inFileName,
     R__ASSERT(TMath::Nint(hVtxStatus->GetBinContent(3)) == nMB); // xcheck for broken logic
   
   outFile->cd();
-  TH1D* hNorm = new TH1D("hNorm", "MB: No vtx=-1, vtx rej=0, N MB=1, N HM=2, N VHM=3",
+  hNorm = new TH1D("hNorm", "MB: No vtx=-1, vtx rej=0, N MB=1, N HM=2, N VHM=3",
        5, -1.5, 3.5);
   hNorm->SetBinContent(1, hVtxStatus->GetBinContent(1));
   hNorm->SetBinContent(2, hVtxStatus->GetBinContent(2));
