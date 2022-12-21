@@ -73,10 +73,10 @@ TH1I* hEventStat;
 // Cascade statistics
 TH1I* hCascStat;
 
+TH1D* hVtxStatus;
+
 TList *PtHistList;
 TList *InvMassList;
 
 TFile* outFile;
 TTree* tree;
-
-TH1D* hVtxStatus;

@@ -366,7 +366,8 @@ TChain* ReadChainFromFile(const char *fileIn, const char *treeName, const char *
   return chain;
 }
 
-void ReadHistoFromFile(const char *fileIn, TH1D *inHist, Int_t maxFiles = -1, Int_t startFile = 0){
+TH1D* ReadHistoFromFile(const char *fileIn, TH1D *inHist, Int_t maxFiles = -1, Int_t startFile = 0){
+  TH1D* hVtxStatus;
   // Open the input stream
   ifstream in;
   in.open(fileIn);
@@ -380,16 +381,22 @@ void ReadHistoFromFile(const char *fileIn, TH1D *inHist, Int_t maxFiles = -1, In
     if (counter<startFile) continue;
     if (maxFiles>0 && counter>maxFiles+startFile) break;
     TFile * f = FindFile(currentFile.Data());
+    if (f && counter == 1){
+      hVtxStatus = (TH1D*)f->Get("hVtxStatus");
+      if (!hVtxStatus) return nullptr;
+      continue;
+    }
     if (f){
       TH1D* tempHist = (TH1D*)f->Get("hVtxStatus");
       if(!tempHist)
         continue;
-      TH1D* hVtxStatus = (TH1D*)tempHist->Clone();
-      if(!hVtxStatus)
+      TH1D* histToAdd  = (TH1D*)tempHist->Clone();
+      if(!histToAdd)
         continue;
-      inHist->Add(hVtxStatus);
+      hVtxStatus->Add(histToAdd);
     }
     delete f;
   }
   in.close();
+  return hVtxStatus;
 }
