@@ -381,7 +381,7 @@ void ReadHistoFromFile(const char *fileIn, TH1D *inHist, Int_t maxFiles = -1, In
     if (maxFiles>0 && counter>maxFiles+startFile) break;
     TFile * f = FindFile(currentFile.Data());
     if (f){
-      TH1D* hVtxStatus = (TH1D*)(inFile->Get("hVtxStatus"))->Clone();
+      TH1D* hVtxStatus = (TH1D*)(f->Get("hVtxStatus"))->Clone();
       inHist->Add(hVtxStatus);
     }
     delete f;
