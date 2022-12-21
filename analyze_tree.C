@@ -64,6 +64,10 @@ void InitHists(){
   hEventStat = new TH1I("hEventStat","",3,0,3);
 
   hCascStat = new TH1I("hCascStat","",9,0,9);
+
+  hVtxStatus = new TH1D("hVtxStatus", "Vtx status - No Vtx = -1, Vtx outside cut = 0, Vtx inside = 1",
+            3, -1.5, 1.5);
+  hVtxStatus->Sumw2();
 }
 
 void WriteToFile(TFile* outFile){
@@ -85,7 +89,7 @@ void analyze_tree_MC(const Char_t* inFileName,
   // Open the input file and set up the classes.
   if(strstr(inFileName, ".dat")) {
     tree = ReadChainFromFile(inFileName, "tree", 0);
-    hVtxStatus = ReadHistoFromFile(inFileName, "hVtxStatus", 0);
+    ReadHistoFromFile(inFileName, hVtxStatus, 0);
   } else {
     TFile* inFile = TFile::Open(inFileName);
     if(!inFile){
