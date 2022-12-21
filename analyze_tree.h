@@ -55,17 +55,22 @@ const Int_t nPtBinsMB = 7;
 Double_t xBinsMB[nPtBinsMB+1] = 
   {1.00, 1.40, 1.80, 2.30, 2.80, 3.30, 3.80, 4.80};
 
-// Bins for HM analysis
+// // Bins for HM analysis
 
-const Int_t nPtBinsHM = 13;
+// const Int_t nPtBinsHM = 13;
+// Double_t xBinsHM[nPtBinsHM+1] = 
+//   {0.60, 1.00, 1.20, 1.40, 1.60, 1.80, 2.00, 2.20, 2.50, 2.90, 
+//    3.40, 4.00, 5.00, 6.50 };
+
+// Binning used in HM analysis for test
+const Int_t nPtBinsHM = 7;
 Double_t xBinsHM[nPtBinsHM+1] = 
-  {0.60, 1.00, 1.20, 1.40, 1.60, 1.80, 2.00, 2.20, 2.50, 2.90, 
-   3.40, 4.00, 5.00, 6.50 };
+  {1.00, 1.40, 1.80, 2.30, 2.80, 3.30, 3.80, 4.80};
 
 // Bins for centrality analysis
 const Int_t nCentrBins = 11;
 Double_t xCentrBins[nCentrBins+1] = 
-{0, 5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100};
+{0, 1, 5, 10, 20, 40, 50, 60, 70, 80, 90, 100};
 
 // Event statistics
 TH1I* hEventStat;

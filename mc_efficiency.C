@@ -53,15 +53,15 @@ void InitHists(){
   hEffOmegaVHM->Sumw2();
 
   hOmegaInvMassVsPtMB = new TH2D("hOmegaInvMassVsPtMB", "M_{inv} vs p_{T}; p_{T}^{casc} [GeV/c]; M_{inv} - M_{#Omega} [GeV/c^{2}]",
-          nPtBins, xBins, nMinvBins, minvBins);
+          nPtBinsMB, xBinsMB, nMinvBins, minvBins);
   hOmegaInvMassVsPtMB->Sumw2();
 
   hOmegaInvMassVsPtHM = new TH2D("hOmegaInvMassVsPtHM", "M_{inv} vs p_{T}; p_{T}^{V0} [GeV/c]; M_{inv} - M_{#Omega}[GeV/c^{2}]",
-          nPtBins, xBins, nMinvBins, minvBins);
+          nPtBinsHM, xBinsHM, nMinvBins, minvBins);
   hOmegaInvMassVsPtHM->Sumw2();
 
   hOmegaInvMassVsPtVHM = new TH2D("hOmegaInvMassVsPtVHM", "M_{inv} vs p_{T}; p_{T}^{V0} [GeV/c]; M_{inv} - M_{#Omega} [GeV/c^{2}]",
-          nPtBins, xBins, nMinvBins, minvBins);
+          nPtBinsHM, xBinsHM, nMinvBins, minvBins);
   hOmegaInvMassVsPtVHM->Sumw2();
 
   hEventStat = new TH1I("hEventStat","",3,0,3);
@@ -137,6 +137,8 @@ void mc_efficiency(const Char_t* inFileName,
     const Int_t nGenTracks = generatedOmega->GetEntries();
     for(Int_t i = 0; i < nGenTracks; i++) {
       AliAnalysisPIDCascadeParticle* trackMC = (AliAnalysisPIDCascadeParticle*)generatedOmega->At(i);
+      if(TMath::Abs(trackMC->GetPt()) < 1.0 || TMath::Abs(trackMC->GetPt()) > 4.8)
+        continue;
       hGenOmegaMB->Fill(trackMC->GetPt());
       if(HMevent)
         hGenOmegaHM->Fill(trackMC->GetPt());
@@ -152,6 +154,8 @@ void mc_efficiency(const Char_t* inFileName,
       Bool_t bPassedStandard = kFALSE;
 
       AliAnalysisPIDCascade* cascade = (AliAnalysisPIDCascade*)allCascades->At(i);
+      if(cascade->GetPtCasc() < 1.0 || cascade->GetPtCasc() > 4.80)
+        continue;
       if(!CheckCascOmegaToXiMass(cascade))
         continue;
 

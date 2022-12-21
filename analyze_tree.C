@@ -146,6 +146,8 @@ void analyze_tree_MC(const Char_t* inFileName,
       const Int_t nGenTracks = generatedOmega->GetEntries();
       for(Int_t i = 0; i < nGenTracks; i++) {
         AliAnalysisPIDCascadeParticle* trackMC = (AliAnalysisPIDCascadeParticle*)generatedOmega->At(i);
+      if(TMath::Abs(trackMC->GetPt()) < 1.0 || TMath::Abs(trackMC->GetPt()) > 4.8)
+        continue;
         hGenOmegaMB->Fill(trackMC->GetPt());
         if(HMevent)
           hGenOmegaHM->Fill(trackMC->GetPt());
@@ -166,6 +168,8 @@ void analyze_tree_MC(const Char_t* inFileName,
       hCascStat->Fill("Total", 1);
 
       AliAnalysisPIDCascade* cascade = (AliAnalysisPIDCascade*)allCascades->At(i);
+      if(cascade->GetPtCasc() < 1.0 || cascade->GetPtCasc() > 4.80)
+        continue;
       if(!CheckCascOmegaToXiMass(cascade))
         continue;
 

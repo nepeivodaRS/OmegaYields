@@ -96,12 +96,13 @@ void SignalExtractionPt(const Double_t *xPtBins, const Int_t nPtBins, TH3D *inHi
   TH2D* hProfileInvMassZ = static_cast<TH2D*>(invMassHist->Project3D("xy"));
   hProfileInvMassZ->Write();
   gStyle->SetOptStat("me");
-  for(Int_t i = 0; i < nPtBins - 1; ++i) {
+  for(Int_t i = 0; i < nPtBins; ++i) {
     gROOT->SetBatch(kFALSE);
-    TH1D* hProfileInvMassX = hProfileInvMassZ->ProjectionX("_px", i, i+1);
+    TH1D* hProfileInvMassX = hProfileInvMassZ->ProjectionX("_px", hProfileInvMassZ->GetYaxis()->FindBin(xPtBins[i]), hProfileInvMassZ->GetYaxis()->FindBin(xPtBins[i+1]));
     hProfileInvMassX->SetTitle(Form("M_{inv} in pt bins fit, %d bin",  i+1));
     TF1 *fitFcn = new TF1("fitFcn",fitFunctionG,-0.03, 0.03,6);
-    fitFcn->SetParameters(1,1,1,20,0,0.001);
+    Double_t sigPickApprox = 20;
+    fitFcn->SetParameters(1,1,1,sigPickApprox,0,0.001);
     fitFcn->SetNpx(1e4);
     gROOT->SetBatch(kTRUE);
     // Create canvas for fitted inv mass
@@ -111,6 +112,7 @@ void SignalExtractionPt(const Double_t *xPtBins, const Int_t nPtBins, TH3D *inHi
     Double_t par[6];
     fitFcn->GetParameters(par);
     // Fill histogram with fitted signal: integral divided by the bin width. And eval the error of each bin
+    std::cout << par[3] << std::endl;
     Double_t FillValue = par[3]*TMath::Power(TMath::TwoPi(), 0.5)*par[5]/(0.06/nMinvBins);
     inHist->Fill((xPtBins[i] + xPtBins[i+1])/2., FillValue);
     inHist->SetBinError(i+1, FillValue*std::pow((std::pow(FitResult->ParError(5)/par[5], 2) + std::pow(FitResult->ParError(3)/par[3], 2)), 0.5));
@@ -176,6 +178,12 @@ void WriteToFile(TFile* outFile){
   hOmegaMB->Write();
   hOmegaHM->Write();
   hOmegaVHM->Write();
+
+  TDirectory* dirOutGen = outFile->mkdir("PtHistsGen");
+  dirOutGen->cd();
+  hGenOmegaMB->Write();
+  hGenOmegaHM->Write();
+  hGenOmegaVHM->Write();
   outFile->Close();
 }
 
@@ -197,6 +205,11 @@ void make_results(const Char_t* fileNameData, const Char_t* fileNameEff, const C
   // Make summed hsitogram of Omega and OmegaBar
   hInvMassOmega->Add(hInvMassOmegaBar);
 
+  TList *ListOfPtHists = (TList*)fileData->Get("ListOfPtHists");
+  hGenOmegaMB = (TH1D*)ListOfPtHists->FindObject("hGenOmegaMB");
+  hGenOmegaHM = (TH1D*)ListOfPtHists->FindObject("hGenOmegaHM");
+  hGenOmegaVHM = (TH1D*)ListOfPtHists->FindObject("hGenOmegaVHM");
+
   // Setup hists
   hOmegaMB = new TH1D("hOmegaMB", "; p_{T} [GeV/c]", nPtBinsMB, xBinsMB);
   hOmegaMB->Sumw2();
@@ -211,8 +224,8 @@ void make_results(const Char_t* fileNameData, const Char_t* fileNameEff, const C
   outFile = new TFile(outputFileName, "RECREATE");
   // Extract the signal from 3d inv mass hist
   SignalExtractionPt(xBinsMB, nPtBinsMB, hInvMassOmega, 1, 11, hOmegaMB, outFile); // 1 - 11 means 0 - 100 %
-  SignalExtractionPt(xBinsHM, nPtBinsHM, hInvMassOmega, 1, 3, hOmegaHM, outFile); // 1 - 3 means 0 - 10 %
-  SignalExtractionPt(xBinsHM, nPtBinsHM, hInvMassOmega, 1, 2, hOmegaVHM, outFile); // 1 - 2 means 0 - 5 %
+  SignalExtractionPt(xBinsHM, nPtBinsHM, hInvMassOmega, 1, 4, hOmegaHM, outFile); // 1 - 4 means 0 - 10 %
+  SignalExtractionPt(xBinsHM, nPtBinsHM, hInvMassOmega, 1, 2, hOmegaVHM, outFile); // 1 - 2 means 0 - 1 %
 
   TF1* fRap = new TF1("fRap", rap_correction, 0.0, 50.0, 2);
   fRap->SetParameters(0.8, massOmega);
@@ -220,32 +233,39 @@ void make_results(const Char_t* fileNameData, const Char_t* fileNameEff, const C
   const Int_t nSpectra = 3;
   TH1D* hEff[nSpectra] = { hEffOmegaMB, hEffOmegaHM, hEffOmegaVHM };
   TH1D* hRaw[nSpectra] = { hOmegaMB,    hOmegaHM,    hOmegaVHM };
+  TH1D* hGen[nSpectra] = { hGenOmegaMB,    hGenOmegaHM,    hGenOmegaVHM};
 
-  // // Normalize results
-  // TH1D* hNorm = (TH1D*)fileData->Get("hNorm");
-  // {
-  //   Double_t nMB = hNorm->GetBinContent(3);
-  //   const Double_t vtxScale = (hNorm->GetBinContent(1)+hNorm->GetBinContent(2)+hNorm->GetBinContent(3)) /
-  //     (hNorm->GetBinContent(2)+hNorm->GetBinContent(3));
-  //   nMB *= vtxScale;
-  //   hOmegaMB->Scale(1.0/nMB);
-  // }
-  // {
-  //   Double_t nHM = hNorm->GetBinContent(4);
-  //   hOmegaHM->Scale(1.0/nHM);
-  // }
-  // {
-  //   Double_t nVHM = hNorm->GetBinContent(5);
-  //   hOmegaVHM->Scale(1.0/nVHM);
-  // }
+  // Normalize results
+  TH1D* hNorm = (TH1D*)fileData->Get("hNorm");
+  {
+    Double_t nMB = hNorm->GetBinContent(3);
+    const Double_t vtxScale = (hNorm->GetBinContent(1)+hNorm->GetBinContent(2)+hNorm->GetBinContent(3)) /
+      (hNorm->GetBinContent(2)+hNorm->GetBinContent(3));
+    nMB *= vtxScale;
+    hOmegaMB->Scale(1.0/nMB);
+    hGenOmegaMB->Scale(1.0/nMB);
+  }
+  {
+    Double_t nHM = hNorm->GetBinContent(4);
+    hOmegaHM->Scale(1.0/nHM);
+    hGenOmegaHM->Scale(1.0/nHM);
+  }
+  {
+    Double_t nVHM = hNorm->GetBinContent(5);
+    hOmegaVHM->Scale(1.0/nVHM);
+    hGenOmegaVHM->Scale(1.0/nVHM);
+  }
 
   // Normalize and correct histograms
   for(Int_t i = 0; i < 1; i++) {
     NormalizeHistogram(hRaw[i]);
+    NormalizeHistogram(hGen[i]);
     hRaw[i]->Divide(hEff[i]);
     // Apply rapidity correction
     hRaw[i]->Divide(fRap);
+    hGen[i]->Divide(fRap);
     hRaw[i]->GetYaxis()->SetTitle("(#Omega+#bar{#Omega}): dN/dp_{T}");
+    hGen[i]->GetYaxis()->SetTitle("(#Omega+#bar{#Omega}): dN/dp_{T}");
   }
   WriteToFile(outFile);
 }
