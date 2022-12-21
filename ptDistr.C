@@ -4,7 +4,7 @@
 /*
   .L ptDistr.C+
 
-  make_results("./outputAnal/mc_anal.root", "./outputPtHists")
+  make_results("./outputAnal/mc_anal.root", "./outputEff/mc_Eff_all.root", "./outputPtHists/PtHist.root")
   
  */
 
@@ -85,30 +85,37 @@ Double_t fitFunctionCB(Double_t *x, Double_t *par) {
   return background(x,par) + DoubleSidedCB(x,&par[3]);
 }
 
-void SignalExtractionPt(const Double_t *xPtBins, const Int_t nPtBins, TH3D *invMassHist, Int_t leftCentr, Int_t rightCentr, TH1D* inHist, TFile* outFile){
-  TDirectory* dir = outFile->mkdir(Form("PtFitHists_%s", invMassHist->GetName()));
+void SignalExtractionPt(const Double_t *xPtBins, const Int_t nPtBins, TH3D *inHist3D, Int_t leftCentr, Int_t rightCentr, TH1D* inHist, TFile* outFile){
+  // Create dir to store all the fitted hists
+  TDirectory* dir = outFile->mkdir(Form("PtFitHists_%s_from_%d_to_%d_centr", inHist3D->GetName(), leftCentr, rightCentr));
   dir->cd();
+  // Clone hist not to change the original one
+  TH3D* invMassHist = (TH3D*)inHist3D->Clone();
+  invMassHist->Write();
   invMassHist->GetZaxis()->SetRange(leftCentr, rightCentr);
   TH2D* hProfileInvMassZ = static_cast<TH2D*>(invMassHist->Project3D("xy"));
+  hProfileInvMassZ->Write();
+  gStyle->SetOptStat("me");
   for(Int_t i = 0; i < nPtBins - 1; ++i) {
     gROOT->SetBatch(kFALSE);
     TH1D* hProfileInvMassX = hProfileInvMassZ->ProjectionX("_px", i, i+1);
-    hProfileInvMassX->SetStats(0);
     hProfileInvMassX->SetTitle(Form("M_{inv} in pt bins fit, %d bin",  i+1));
     TF1 *fitFcn = new TF1("fitFcn",fitFunctionG,-0.03, 0.03,6);
     fitFcn->SetParameters(1,1,1,20,0,0.001);
     fitFcn->SetNpx(1e4);
     gROOT->SetBatch(kTRUE);
+    // Create canvas for fitted inv mass
     TCanvas *c1 = new TCanvas(Form("PtFit_%d", i+1),"PtHist",10,10,1200,900);
     c1->cd();
     TFitResultPtr FitResult = hProfileInvMassX->Fit("fitFcn","epS");
     Double_t par[6];
     fitFcn->GetParameters(par);
-    // Fill histogram with fitted signal integral divided by the bin width
+    // Fill histogram with fitted signal: integral divided by the bin width. And eval the error of each bin
     Double_t FillValue = par[3]*TMath::Power(TMath::TwoPi(), 0.5)*par[5]/(0.06/nMinvBins);
     inHist->Fill((xPtBins[i] + xPtBins[i+1])/2., FillValue);
     inHist->SetBinError(i+1, FillValue*std::pow((std::pow(FitResult->ParError(5)/par[5], 2) + std::pow(FitResult->ParError(3)/par[3], 2)), 0.5));
 
+    // Addition of fitted signal and background curves to our canvas
     TF1 *backFcn = new TF1("backFcn",background,-0.03,0.03,3);
     TF1 *signalFcn = new TF1("signalFcn",GAUSS,-0.03,0.03,3);
     
@@ -124,6 +131,7 @@ void SignalExtractionPt(const Double_t *xPtBins, const Int_t nPtBins, TH3D *invM
     signalFcn->SetParameters(&par[3]);
     signalFcn->Draw("same");
 
+    // Settings of Legend
     TLegend *legend=new TLegend(0.6,0.65,0.88,0.85);
     legend->SetTextFont(42);
     legend->SetTextSize(0.03);
@@ -135,49 +143,73 @@ void SignalExtractionPt(const Double_t *xPtBins, const Int_t nPtBins, TH3D *invM
     legend->AddEntry(fitFcn,"global Fit","l");
     legend->Draw("same");
 
+    // Settings of latex label of pt range
     TLatex ptRange;
     ptRange.SetTextSize(0.03);
     ptRange.SetTextFont(42);
     ptRange.SetNDC();
     ptRange.DrawLatex(0.194491, 0.74, Form("%.2f < p_{T} < %.2f", xPtBins[i], xPtBins[i+1]));
+
+    // Settings of stat box
+    gPad->Update();
+    TPaveStats *st = (TPaveStats*)hProfileInvMassX->FindObject("stats");
+    st->SetX1NDC(0.191152);
+    st->SetX2NDC(0.333055);
+    st->SetY1NDC(0.784897);
+    st->SetY2NDC(0.847826);
+    st->SetBorderSize(0);
+
+    // Write canvas of fitted inv mass distr
     c1->Update();
     c1->Write();
   }
+  gStyle->SetOptStat(0);
+  // Go back to default dir in output file
   dir->cd("/");
 }
 
 void WriteToFile(TFile* outFile){
   // Write to file
   outFile->cd();
-  outFile->WriteObject(PtHistList, "ListOfPtHists");
+  TDirectory* dirOut = outFile->mkdir("PtHists");
+  dirOut->cd();
+  hOmegaMB->Write();
+  hOmegaHM->Write();
+  hOmegaVHM->Write();
   outFile->Close();
 }
 
-void make_results(const Char_t* fileNameData, const Char_t* outputDir, const Char_t* fileNameEff){
+void make_results(const Char_t* fileNameData, const Char_t* fileNameEff, const Char_t* outputFileName){
+  gStyle->SetOptStat(0);
   // Get Efficiency
   fileEff = FindFileFresh(fileNameEff);
+  fileEff->cd();
   hEffOmegaMB = (TH1D*)fileEff->Get("hEffOmegaMB");
   hEffOmegaHM = (TH1D*)fileEff->Get("hEffOmegaHM");
   hEffOmegaVHM = (TH1D*)fileEff->Get("hEffOmegaVHM");
 
-  outFile = new TFile(Form("%s/PtHist.root", outputDir), "RECREATE");
-
+  // Get Data
   TFile* fileData = FindFileFresh(fileNameData);
+  fileData->cd();
   TList *ListOfHists = (TList*)fileData->Get("ListOfEInvMassHists");
   TH3D* hInvMassOmega = (TH3D*)ListOfHists->FindObject("hOmegaInvMassVsPt_Omega");
   TH3D* hInvMassOmegaBar = (TH3D*)ListOfHists->FindObject("hOmegaInvMassVsPt_OmegaBar");
   // Make summed hsitogram of Omega and OmegaBar
   hInvMassOmega->Add(hInvMassOmegaBar);
 
+  // Setup hists
   hOmegaMB = new TH1D("hOmegaMB", "; p_{T} [GeV/c]", nPtBinsMB, xBinsMB);
   hOmegaMB->Sumw2();
 
-  hOmegaHM = new TH1D("hGenOmegaHM", ";  p_{T} [GeV/c]", nPtBinsHM, xBinsHM);
+  hOmegaHM = new TH1D("hOmegaHM", ";  p_{T} [GeV/c]", nPtBinsHM, xBinsHM);
   hOmegaHM->Sumw2();
 
-  hOmegaVHM = new TH1D("hGenOmegaVHM", ";  p_{T} [GeV/c]", nPtBinsHM, xBinsHM);
+  hOmegaVHM = new TH1D("hOmegaVHM", ";  p_{T} [GeV/c]", nPtBinsHM, xBinsHM);
   hOmegaVHM->Sumw2();
 
+  // Create output file
+  outFile = new TFile(outputFileName, "RECREATE");
+  // Extract the signal from 3d inv mass hist
   SignalExtractionPt(xBinsMB, nPtBinsMB, hInvMassOmega, 1, 11, hOmegaMB, outFile); // 1 - 11 means 0 - 100 %
   SignalExtractionPt(xBinsHM, nPtBinsHM, hInvMassOmega, 1, 3, hOmegaHM, outFile); // 1 - 3 means 0 - 10 %
   SignalExtractionPt(xBinsHM, nPtBinsHM, hInvMassOmega, 1, 2, hOmegaVHM, outFile); // 1 - 2 means 0 - 5 %
@@ -185,38 +217,35 @@ void make_results(const Char_t* fileNameData, const Char_t* outputDir, const Cha
   TF1* fRap = new TF1("fRap", rap_correction, 0.0, 50.0, 2);
   fRap->SetParameters(0.8, massOmega);
 
-  // Normalize results
-  TH1D* hNorm = (TH1D*)fileData->Get("hNorm");
-  {
-    Double_t nMB = hNorm->GetBinContent(3);
-    const Double_t vtxScale = (hNorm->GetBinContent(1)+hNorm->GetBinContent(2)+hNorm->GetBinContent(3)) /
-      (hNorm->GetBinContent(2)+hNorm->GetBinContent(3));
-    nMB *= vtxScale;
-    hXiMB->Scale(1.0/nMB);
-  }
-  {
-    Double_t nHM = hNorm->GetBinContent(4);
-    hXiHM->Scale(1.0/nHM);
-  }
-  {
-    Double_t nVHM = hNorm->GetBinContent(5);
-    hXiVHM->Scale(1.0/nVHM);
-  }
+  const Int_t nSpectra = 3;
+  TH1D* hEff[nSpectra] = { hEffOmegaMB, hEffOmegaHM, hEffOmegaVHM };
+  TH1D* hRaw[nSpectra] = { hOmegaMB,    hOmegaHM,    hOmegaVHM };
+
+  // // Normalize results
+  // TH1D* hNorm = (TH1D*)fileData->Get("hNorm");
+  // {
+  //   Double_t nMB = hNorm->GetBinContent(3);
+  //   const Double_t vtxScale = (hNorm->GetBinContent(1)+hNorm->GetBinContent(2)+hNorm->GetBinContent(3)) /
+  //     (hNorm->GetBinContent(2)+hNorm->GetBinContent(3));
+  //   nMB *= vtxScale;
+  //   hOmegaMB->Scale(1.0/nMB);
+  // }
+  // {
+  //   Double_t nHM = hNorm->GetBinContent(4);
+  //   hOmegaHM->Scale(1.0/nHM);
+  // }
+  // {
+  //   Double_t nVHM = hNorm->GetBinContent(5);
+  //   hOmegaVHM->Scale(1.0/nVHM);
+  // }
 
   // Normalize and correct histograms
-  for(Int_t i = 0; i < nSpectra; i++) {
+  for(Int_t i = 0; i < 1; i++) {
     NormalizeHistogram(hRaw[i]);
     hRaw[i]->Divide(hEff[i]);
     // Apply rapidity correction
     hRaw[i]->Divide(fRap);
     hRaw[i]->GetYaxis()->SetTitle("(#Omega+#bar{#Omega}): dN/dp_{T}");
   }
-
-  // hOmegaMB->Scale(1./nMB);
-  // NormalizeHistogram(hOmegaMB);
-  // Eff
-  // hOmegaMB->Divide(fRap);
-  PtHistList = new TList();
-  PtHistList->Add(hOmegaMB);
   WriteToFile(outFile);
 }

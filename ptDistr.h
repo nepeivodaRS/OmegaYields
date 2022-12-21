@@ -27,6 +27,7 @@
 
 const Double_t massOmega = 1.67245;
 const Int_t nMinvBins = 180;
+
 // Binning used in MB analysis
 const Int_t nPtBinsMB = 7;
 Double_t xBinsMB[nPtBinsMB+1] = {1.00, 1.40, 1.80, 2.30, 2.80, 3.30, 3.80, 4.80};
@@ -48,7 +49,3 @@ TH1D* hOmegaVHM;
 TH1D* hEffOmegaMB;
 TH1D* hEffOmegaHM;
 TH1D* hEffOmegaVHM;
-
-const Int_t nSpectra = 3;
-TH1D* hEff[nSpectra] = { hEffOmegaMB, hEffOmegaHM, hEffOmegaVHM };
-TH1D* hRaw[nSpectra] = { hOmegaMB,    hOmegaHM,    hOmegaVHM };
