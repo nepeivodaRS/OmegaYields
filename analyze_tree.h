@@ -79,3 +79,4 @@ TList *InvMassList;
 TFile* outFile;
 TTree* tree;
 
+TH1D* hVtxStatus;

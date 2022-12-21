@@ -31,24 +31,24 @@ const Int_t nMinvBins = 180;
 const Int_t nPtBinsMB = 7;
 Double_t xBinsMB[nPtBinsMB+1] = {1.00, 1.40, 1.80, 2.30, 2.80, 3.30, 3.80, 4.80};
 
+// Bins for HM analysis
+const Int_t nPtBinsHM = 13;
+Double_t xBinsHM[nPtBinsHM+1] = {0.60, 1.00, 1.20, 1.40, 1.60, 1.80, 2.00, 2.20, 2.50, 2.90, 3.40, 4.00, 5.00, 6.50 };
+
 TCanvas * c1 = 0;
 
 TList *PtHistList;
 TFile* outFile;
+TFile* fileEff;
 
-TFile* FindFileFresh(const Char_t* fileName)
-{
-  // Find file
-  TFile *file = (TFile*)gROOT->GetListOfFiles()->FindObject(fileName);
-  if(file) {
-    file->Close();
-    delete file;
-  }
+TH1D* hOmegaMB;
+TH1D* hOmegaHM;
+TH1D* hOmegaVHM;
 
-  file = TFile::Open(fileName, "READ");
+TH1D* hEffOmegaMB;
+TH1D* hEffOmegaHM;
+TH1D* hEffOmegaVHM;
 
-  if(!file)
-    cout << "File : " << fileName << " was not found" << endl;
-
-  return file;
-}
+const Int_t nSpectra = 3;
+TH1D* hEff[nSpectra] = { hEffOmegaMB, hEffOmegaHM, hEffOmegaVHM };
+TH1D* hRaw[nSpectra] = { hOmegaMB,    hOmegaHM,    hOmegaVHM };

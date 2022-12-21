@@ -85,13 +85,17 @@ void analyze_tree_MC(const Char_t* inFileName,
   // Open the input file and set up the classes.
   if(strstr(inFileName, ".dat")) {
     tree = ReadChainFromFile(inFileName, "tree", 0);
+    hVtxStatus = ReadChainFromFile(inFileName, "hVtxStatus", 0);
   } else {
     TFile* inFile = TFile::Open(inFileName);
     if(!inFile){
       return;
     }
     tree = (TTree*)inFile->Get("tree");
+    hVtxStatus = (TH1D*)inFile->Get("hVtxStatus");
   }
+
+  
 
   AliAnalysisPIDCascadeEvent* event = 0;
   TClonesArray* allCascades = 0;
@@ -211,5 +215,17 @@ void analyze_tree_MC(const Char_t* inFileName,
       }
     }
   }
+
+  if(maxEvents == 0)
+    R__ASSERT(TMath::Nint(hVtxStatus->GetBinContent(3)) == nMB); // xcheck for broken logic
+  
+  outFile->cd();
+  TH1D* hNorm = new TH1D("hNorm", "MB: No vtx=-1, vtx rej=0, N MB=1, N HM=2, N VHM=3",
+       5, -1.5, 3.5);
+  hNorm->SetBinContent(1, hVtxStatus->GetBinContent(1));
+  hNorm->SetBinContent(2, hVtxStatus->GetBinContent(2));
+  hNorm->SetBinContent(3, nMB);
+  hNorm->SetBinContent(4, nHM);
+  hNorm->SetBinContent(5, nVHM);
   WriteToFile(outFile);
 }

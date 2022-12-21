@@ -8,6 +8,23 @@
   
  */
 
+TFile* FindFileFresh(const Char_t* fileName)
+{
+  // Find file
+  TFile *file = (TFile*)gROOT->GetListOfFiles()->FindObject(fileName);
+  if(file) {
+    file->Close();
+    delete file;
+  }
+
+  file = TFile::Open(fileName, "READ");
+
+  if(!file)
+    cout << "File : " << fileName << " was not found" << endl;
+
+  return file;
+}
+
 Double_t rap_correction(Double_t* x, Double_t* par)
 {
   Double_t pt = x[0];  
@@ -136,25 +153,70 @@ void WriteToFile(TFile* outFile){
   outFile->Close();
 }
 
-void make_results(const Char_t* fileNameData, const Char_t* outputDir){
-  PtHistList = new TList();
-  outFile = new TFile(Form("%s/PtHist.root", outputDir), "RECREATE");
-  TFile* fileData = FindFileFresh(fileNameData);
+void make_results(const Char_t* fileNameData, const Char_t* outputDir, const Char_t* fileNameEff){
+  // Get Efficiency
+  fileEff = FindFileFresh(fileNameEff);
+  hEffOmegaMB = (TH1D*)fileEff->Get("hEffOmegaMB");
+  hEffOmegaHM = (TH1D*)fileEff->Get("hEffOmegaHM");
+  hEffOmegaVHM = (TH1D*)fileEff->Get("hEffOmegaVHM");
 
+  outFile = new TFile(Form("%s/PtHist.root", outputDir), "RECREATE");
+
+  TFile* fileData = FindFileFresh(fileNameData);
   TList *ListOfHists = (TList*)fileData->Get("ListOfEInvMassHists");
   TH3D* hInvMassOmega = (TH3D*)ListOfHists->FindObject("hOmegaInvMassVsPt_Omega");
   TH3D* hInvMassOmegaBar = (TH3D*)ListOfHists->FindObject("hOmegaInvMassVsPt_OmegaBar");
+  // Make summed hsitogram of Omega and OmegaBar
   hInvMassOmega->Add(hInvMassOmegaBar);
-  TF1* fRap = new TF1("fRap", rap_correction, 0.0, 50.0, 2);
-  fRap->SetParameters(0.8, massOmega);
-  TH1D* hOmegaMB = new TH1D("hOmegaMB", "; p_{T} [GeV/c]", nPtBinsMB, xBinsMB);
+
+  hOmegaMB = new TH1D("hOmegaMB", "; p_{T} [GeV/c]", nPtBinsMB, xBinsMB);
   hOmegaMB->Sumw2();
 
-  SignalExtractionPt(xBinsMB, nPtBinsMB, hInvMassOmega, 1, 11, hOmegaMB, outFile); // 1 - 11
+  hOmegaHM = new TH1D("hGenOmegaHM", ";  p_{T} [GeV/c]", nPtBinsHM, xBinsHM);
+  hOmegaHM->Sumw2();
+
+  hOmegaVHM = new TH1D("hGenOmegaVHM", ";  p_{T} [GeV/c]", nPtBinsHM, xBinsHM);
+  hOmegaVHM->Sumw2();
+
+  SignalExtractionPt(xBinsMB, nPtBinsMB, hInvMassOmega, 1, 11, hOmegaMB, outFile); // 1 - 11 means 0 - 100 %
+  SignalExtractionPt(xBinsHM, nPtBinsHM, hInvMassOmega, 1, 3, hOmegaHM, outFile); // 1 - 3 means 0 - 10 %
+  SignalExtractionPt(xBinsHM, nPtBinsHM, hInvMassOmega, 1, 2, hOmegaVHM, outFile); // 1 - 2 means 0 - 5 %
+
+  TF1* fRap = new TF1("fRap", rap_correction, 0.0, 50.0, 2);
+  fRap->SetParameters(0.8, massOmega);
+
+  // Normalize results
+  TH1D* hNorm = (TH1D*)fileData->Get("hNorm");
+  {
+    Double_t nMB = hNorm->GetBinContent(3);
+    const Double_t vtxScale = (hNorm->GetBinContent(1)+hNorm->GetBinContent(2)+hNorm->GetBinContent(3)) /
+      (hNorm->GetBinContent(2)+hNorm->GetBinContent(3));
+    nMB *= vtxScale;
+    hXiMB->Scale(1.0/nMB);
+  }
+  {
+    Double_t nHM = hNorm->GetBinContent(4);
+    hXiHM->Scale(1.0/nHM);
+  }
+  {
+    Double_t nVHM = hNorm->GetBinContent(5);
+    hXiVHM->Scale(1.0/nVHM);
+  }
+
+  // Normalize and correct histograms
+  for(Int_t i = 0; i < nSpectra; i++) {
+    NormalizeHistogram(hRaw[i]);
+    hRaw[i]->Divide(hEff[i]);
+    // Apply rapidity correction
+    hRaw[i]->Divide(fRap);
+    hRaw[i]->GetYaxis()->SetTitle("(#Omega+#bar{#Omega}): dN/dp_{T}");
+  }
+
   // hOmegaMB->Scale(1./nMB);
   // NormalizeHistogram(hOmegaMB);
   // Eff
   // hOmegaMB->Divide(fRap);
+  PtHistList = new TList();
   PtHistList->Add(hOmegaMB);
   WriteToFile(outFile);
 }
