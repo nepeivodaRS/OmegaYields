@@ -368,7 +368,7 @@ TChain* ReadChainFromFile(const char *fileIn, const char *treeName, const char *
 
 TH1D* ReadHistoFromFile(const char *fileIn, const char *histoName, const char *fName, Int_t maxFiles = -1, Int_t startFile = 0){
   // Create the outhisto
-  TH1D* outHisto = new TH1D(histoName);
+  TH1D* outHisto;
   // Open the input stream
   ifstream in;
   in.open(fileIn);
