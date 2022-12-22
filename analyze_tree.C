@@ -8,7 +8,7 @@
 
   .L analyze_tree.C+
 
-  analyze_tree_MC("./outputTreesMC/mc_tree_all.dat", "./outputAnal/mc_anal_sameBinning.root", 0, 1)
+  analyze_tree("./outputTreesMC/mc_tree_all.dat", "./outputAnal/mc_anal_sameBinning.root", 0, 1)
 */
 
 void InitHists(){
@@ -77,7 +77,7 @@ void WriteToFile(TFile* outFile){
   outFile->Close();
 }
 
-void analyze_tree_MC(const Char_t* inFileName,
+void analyze_tree(const Char_t* inFileName,
 		const Char_t* outFileName,
 		const Int_t maxEvents = 0,
     Bool_t isMC = kFALSE)
@@ -85,7 +85,7 @@ void analyze_tree_MC(const Char_t* inFileName,
   // Open the input file and set up the classes.
   if(strstr(inFileName, ".dat")) {
     tree = ReadChainFromFile(inFileName, "tree", 0);
-    hVtxStatus = ReadHistoFromFile(inFileName, hVtxStatus, 0);
+    hVtxStatus = ReadHistoVtxStatusFromFile(inFileName, 0);
   } else {
     TFile* inFile = TFile::Open(inFileName);
     if(!inFile){

@@ -204,4 +204,3 @@ void mc_efficiency(const Char_t* inFileName,
 
   WriteToFile(outFile);
 }
-

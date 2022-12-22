@@ -366,7 +366,7 @@ TChain* ReadChainFromFile(const char *fileIn, const char *treeName, const char *
   return chain;
 }
 
-TH1D* ReadHistoFromFile(const char *fileIn, TH1D *inHist, Int_t maxFiles = -1, Int_t startFile = 0){
+TH1D* ReadHistoVtxStatusFromFile(const char *fileIn, Int_t maxFiles = -1, Int_t startFile = 0){
   TH1D* hVtxStatus;
   // Open the input stream
   ifstream in;
