@@ -56,6 +56,7 @@ void InitHists(){
   hOmegaInconsistencyXi = new TH2D("hOmegaInvMassVsPt", "M_{inv} inconsistency; M_{inv} - M_{#Xi} [GeV/c^{2}]; M_{inv} - M_{#Omega} [GeV/c^{2}]",
           nMinvBins, minvBins, nMinvBins, minvBins);
   hOmegaInconsistencyXi->Sumw2();
+  InvMassList->Add(hOmegaInconsistencyXi);
 
   for(Int_t i = 0; i < nSpecies; i++) {
     hOmegaInvMassVsPt[i] = new TH3D(Form("hOmegaInvMassVsPt_%s", pdgNameOmega[i]), "M_{inv} vs p_{T}; p_{T}^{casc} [GeV/c]; M_{inv} - M_{#Omega} [GeV/c^{2}]; Centrality V0M",
