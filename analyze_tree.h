@@ -48,7 +48,7 @@ Double_t xBins[nPtBins+1] =
    2.6, 2.8, 3.0, 3.3, 3.6, 4.0, 4.5, 5.0, 5.5, 6.5};
 
 
-const Int_t nMinvBins = 180;
+const Int_t nMinvBins = 300;
 Double_t minvBins[nMinvBins+1] = { 0 };
 
 // Binning used in MB analysis
