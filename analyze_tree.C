@@ -8,7 +8,7 @@
 
   .L analyze_tree.C+
 
-  analyze_tree("./outputTreesMC/mc_tree_all.dat", "./outputAnal/mc_anal_sameBinning.root", 0, 1)
+  analyze_tree("./outputTreesMC/mc_tree_all.dat", "./outputAnal/mc_anal_inconsistency.root", 0, 1)
 */
 
 void InitHists(){
@@ -175,6 +175,11 @@ void analyze_tree(const Char_t* inFileName,
       AliAnalysisPIDCascade* cascade = (AliAnalysisPIDCascade*)allCascades->At(i);
       if(cascade->GetPtCasc() < 1.0 || cascade->GetPtCasc() > 4.80)
         continue;
+
+      const Double_t dMassOmega     = cascade->GetIMO() - massOmega;
+      const Double_t dMassXi = cascade->GetIMXi() - massXi;
+      hOmegaInconsistencyXi->Fill(dMassXi, dMassOmega);
+
       if(!CheckCascOmegaToXiMass(cascade))
         continue;
 
@@ -211,13 +216,9 @@ void analyze_tree(const Char_t* inFileName,
       bPassedStandard = CheckCascStandardCuts(cascade);
       if(bPassedStandard){
         hCascStat->Fill("Standart", 1);
-        const Double_t dMassOmega     = cascade->GetIMO() - massOmega;
-        const Double_t dMassXi = cascade->GetIMXi() - massXi;
         Int_t bin = 1;
         if(cascade->GetCharge() < 0){bin = 0;}
           hOmegaInvMassVsPt[bin]->Fill(cascade->GetPtCasc(), dMassOmega, event->GetV0Mmultiplicity());
-
-        hOmegaInconsistencyXi->Fill(dMassXi, dMassOmega);
       }
 
       bPassedTight = CheckCascTightCuts(cascade);
