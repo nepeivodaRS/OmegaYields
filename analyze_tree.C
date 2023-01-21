@@ -53,6 +53,10 @@ void InitHists(){
 
   InvMassList = new TList();
 
+  hOmegaInconsistencyXi = new TH3D("hOmegaInvMassVsPt", "M_{inv} inconsistency; M_{inv} - M_{#Xi} [GeV/c^{2}]; M_{inv} - M_{#Omega} [GeV/c^{2}]",
+          nMinvBins, minvBins, nMinvBins, minvBins);
+  hOmegaInconsistencyXi->Sumw2();
+
   for(Int_t i = 0; i < nSpecies; i++) {
     hOmegaInvMassVsPt[i] = new TH3D(Form("hOmegaInvMassVsPt_%s", pdgNameOmega[i]), "M_{inv} vs p_{T}; p_{T}^{casc} [GeV/c]; M_{inv} - M_{#Omega} [GeV/c^{2}]; Centrality V0M",
             nPtBinsMB, xBinsMB, nMinvBins, minvBins, nCentrBins, xCentrBins);
@@ -207,9 +211,12 @@ void analyze_tree(const Char_t* inFileName,
       if(bPassedStandard){
         hCascStat->Fill("Standart", 1);
         const Double_t dMassOmega     = cascade->GetIMO() - massOmega;
+        const Double_t dMassXi = cascade->GetIMXi() - massXi;
         Int_t bin = 1;
         if(cascade->GetCharge() < 0){bin = 0;}
-        hOmegaInvMassVsPt[bin]->Fill(cascade->GetPtCasc(), dMassOmega, event->GetV0Mmultiplicity());
+          hOmegaInvMassVsPt[bin]->Fill(cascade->GetPtCasc(), dMassOmega, event->GetV0Mmultiplicity());
+
+        hOmegaInconsistencyXi->Fill(dMassXi, dMassOmega);
       }
 
       bPassedTight = CheckCascTightCuts(cascade);
