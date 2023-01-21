@@ -53,7 +53,7 @@ void InitHists(){
 
   InvMassList = new TList();
 
-  hOmegaInconsistencyXi = new TH3D("hOmegaInvMassVsPt", "M_{inv} inconsistency; M_{inv} - M_{#Xi} [GeV/c^{2}]; M_{inv} - M_{#Omega} [GeV/c^{2}]",
+  hOmegaInconsistencyXi = new TH2D("hOmegaInvMassVsPt", "M_{inv} inconsistency; M_{inv} - M_{#Xi} [GeV/c^{2}]; M_{inv} - M_{#Omega} [GeV/c^{2}]",
           nMinvBins, minvBins, nMinvBins, minvBins);
   hOmegaInconsistencyXi->Sumw2();
 
