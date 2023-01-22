@@ -193,7 +193,7 @@ Bool_t CheckCascLooseCuts(AliAnalysisPIDCascade* cascade) {
 
 Bool_t CheckCascStandardCuts(AliAnalysisPIDCascade* cascade) {
   // Pt check
-  if(cascade->GetPtCasc() < 1.0)
+  if(cascade->GetPtCasc() < 0.15)
     return kFALSE;
 
   AliAnalysisPIDCascadeV0* v0 = cascade->GetV0();

@@ -179,14 +179,14 @@ void analyze_tree(const Char_t* inFileName,
       const Double_t dMassOmega     = cascade->GetIMO() - massOmega;
       const Double_t dMassXi = cascade->GetIMXi() - massXi;
 
-      // if(!CheckCascOmegaToXiMass(cascade))
-      //   continue;
+      if(!CheckCascOmegaToXiMass(cascade))
+        continue;
 
       hCascStat->Fill("#Xi check", 1);
 
-      // const Double_t deltaM     = cascade->GetIMO() - massOmega;
-      // if(TMath::Abs(deltaM) > 0.029999999)
-      //   continue;
+      const Double_t deltaM     = cascade->GetIMO() - massOmega;
+      if(TMath::Abs(deltaM) > 0.029999999)
+        continue;
 
       hCascStat->Fill("M_{#Omega} check", 1);
 
