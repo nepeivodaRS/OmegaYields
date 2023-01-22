@@ -8,7 +8,7 @@
 
   .L analyze_tree.C+
 
-  analyze_tree("./outputTreesMC/mc_tree_all.dat", "./outputAnal/mc_anal_inconsistency.root", 0, 1)
+  analyze_tree("./outputTreesMC/mc_tree_all.dat", "./outputAnal/mc_anal_22.root", 0, 1)
 */
 
 void InitHists(){
@@ -214,7 +214,7 @@ void analyze_tree(const Char_t* inFileName,
 
       bPassedStandard = CheckCascStandardCuts(cascade);
       if(bPassedStandard){
-        hCascStat->Fill("Standart", 1);
+        hCascStat->Fill("Standard", 1);
         Int_t bin = 1;
         if(cascade->GetCharge() < 0){bin = 0;}
           hOmegaInvMassVsPt[bin]->Fill(cascade->GetPtCasc(), dMassOmega, event->GetV0Mmultiplicity());
