@@ -48,7 +48,7 @@ Double_t xBins[nPtBins+1] =
    2.6, 2.8, 3.0, 3.3, 3.6, 4.0, 4.5, 5.0, 5.5, 6.5};
 
 
-const Int_t nMinvBins = 300;
+const Int_t nMinvBins = 180;
 Double_t minvBins[nMinvBins+1] = { 0 };
 
 // Binning used in MB analysis
@@ -63,10 +63,15 @@ Double_t xBinsMB[nPtBinsMB+1] =
 //   {0.60, 1.00, 1.20, 1.40, 1.60, 1.80, 2.00, 2.20, 2.50, 2.90, 
 //    3.40, 4.00, 5.00, 6.50 };
 
+// // Binning used in HM analysis for test
+// const Int_t nPtBinsHM = 7;
+// Double_t xBinsHM[nPtBinsHM+1] = 
+//   {1.00, 1.40, 1.80, 2.30, 2.80, 3.30, 3.80, 4.80};
+
 // Binning used in HM analysis for test
-const Int_t nPtBinsHM = 7;
+const Int_t nPtBinsHM = 6;
 Double_t xBinsHM[nPtBinsHM+1] = 
-  {1.00, 1.40, 1.80, 2.30, 2.80, 3.30, 3.80, 4.80};
+  {0.90, 1.60, 2.20, 2.60, 3.00, 3.80, 5.50};
 
 // Bins for centrality analysis
 const Int_t nCentrBins = 11;

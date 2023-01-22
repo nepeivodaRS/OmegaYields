@@ -14,7 +14,7 @@
 void InitHists(){
   // Initialization of histograms
   for(Int_t i = 0; i <= nMinvBins; i++) {
-    minvBins[i] = -0.1 + i * 0.2/nMinvBins;
+    minvBins[i] = -0.03 + i * 0.06/nMinvBins;
   }
 
   PtHistList = new TList();
