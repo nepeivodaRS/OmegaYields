@@ -4,7 +4,7 @@
 /*
   .L ptDistr.C+
 
-  make_results("./outputAnal/mc_anal_sameBinning.root", "./outputEff/mc_Eff_sameBinning.root", "./outputPtHists/PtHistSameBinning.root", 1)
+  make_results("./outputAnal/mc_anal_22.root", "./outputEff/mc_Eff_22.root", "./outputPtHists/PtHist_22.root", 1)
   
  */
 
@@ -77,8 +77,16 @@ Double_t GAUSS(Double_t *x, Double_t *par){
 return par[0]*exp(-0.5*(((x[0]-par[1])/par[2])*((x[0]-par[1])/par[2])));
 }
 
+Double_t GAUSSredifined(Double_t *x, Double_t *par){
+return par[0]*(0.06/nMinvBins)/(par[2]*TMath::Power(TMath::TwoPi(), 0.5))*exp(-0.5*(((x[0]-par[1])/par[2])*((x[0]-par[1])/par[2])));
+}
+
 Double_t fitFunctionG(Double_t *x, Double_t *par) {
   return background(x,par) + GAUSS(x,&par[3]);
+}
+
+Double_t fitFunctionRedifined(Double_t *x, Double_t *par) {
+  return background(x,par) + GAUSSredifined(x,&par[3]);
 }
 
 Double_t fitFunctionCB(Double_t *x, Double_t *par) {
@@ -217,23 +225,33 @@ void SignalExtractionPt(const Double_t *xPtBins, const Int_t nPtBins, TH3D *inHi
     TF1 *fitFcn = new TF1("fitFcn",fitFunctionG,-0.03, 0.03,6);
     Double_t sigPickApprox = 20;
     fitFcn->SetParameters(1,1,1,sigPickApprox,0,0.001);
-    fitFcn->SetNpx(1e5);
-    fitFcn->SetLineColor(kRed+1);
+    // fitFcn->SetNpx(1e5);
+    // fitFcn->SetLineColor(kRed+1);
+    TH1D* hProfileInvMassXFirstFit = (TH1D*)hProfileInvMassX->Clone();
+    hProfileInvMassXFirstFit->Fit("fitFcn","epr");
+    Double_t par[6];
+    fitFcn->GetParameters(par);
+    par[5] = TMath::Abs(par[5]); // sometimes sigma is negative
+    // Make a fit once again with initial guess based on the previous fit
+    TF1 *fitFcnRedefined = new TF1("fitFcn2",fitFunctionRedifined,-0.03, 0.03,6);
+    fitFcnRedefined->SetParameters(par);
+    fitFcnRedefined->SetNpx(1e5);
+    fitFcnRedefined->SetLineColor(kRed+1);
     // Create canvas for fitted inv mass
     TCanvas *c1 = new TCanvas(Form("PtFit_%d", i+1),"PtHist",10,10,1200,900);
     c1->cd();
-    TFitResultPtr FitResult = hProfileInvMassX->Fit("fitFcn","eprS");
-    Double_t par[6];
-    fitFcn->GetParameters(par);
+    TFitResultPtr FitResult = hProfileInvMassX->Fit("fitFcn2","eprS");
+    fitFcnRedefined->GetParameters(par);
     // Fill histogram with fitted signal: integral divided by the bin width. And eval the error of each bin
-    Double_t FillValue = par[3]*TMath::Power(TMath::TwoPi(), 0.5)*TMath::Abs(par[5])/(0.06/nMinvBins); // Abs cause sometimes negative ?sigma?
-    std::cout << "bin number: " << i+1 << " pick value: " << par[3] << " signal value: " << FillValue << std::endl;
+    //Double_t FillValue = par[3]*TMath::Power(TMath::TwoPi(), 0.5)*TMath::Abs(par[5])/(0.06/nMinvBins); // Abs cause sometimes negative ?sigma?
+    Double_t FillValue = par[3];
+    //std::cout << "bin number: " << i+1 << " pick value: " << par[3] << " signal value: " << FillValue << std::endl;
     inHist->Fill((xPtBins[i] + xPtBins[i+1])/2., FillValue);
-    inHist->SetBinError(i+1, FillValue*std::pow((std::pow(FitResult->ParError(5)/par[5], 2) + std::pow(FitResult->ParError(3)/par[3], 2)), 0.5));
-
+    //inHist->SetBinError(i+1, FillValue*std::pow((std::pow(FitResult->ParError(5)/par[5], 2) + std::pow(FitResult->ParError(3)/par[3], 2)), 0.5));
+    inHist->SetBinError(i+1, FitResult->ParError(3));
     // Addition of fitted signal and background curves to our canvas
     TF1 *backFcn = new TF1("backFcn",background,-0.03,0.03,3);
-    TF1 *signalFcn = new TF1("signalFcn",GAUSS,-0.03,0.03,3);
+    TF1 *signalFcn = new TF1("signalFcn",GAUSSredifined,-0.03,0.03,3);
     
     signalFcn->SetNpx(1e4);
     backFcn->SetParameters(par);
@@ -253,7 +271,7 @@ void SignalExtractionPt(const Double_t *xPtBins, const Int_t nPtBins, TH3D *inHi
     legend->SetFillColorAlpha(0.,0.);
     legend->SetBorderSize(0.);
     legend->AddEntry(hProfileInvMassX,"Data (stat uncert.)","lpe");
-    legend->AddEntry(fitFcn,"fit (signal + bkg.)","l");
+    legend->AddEntry(fitFcnRedefined,"fit (signal + bkg.)","l");
     legend->AddEntry(backFcn,"estimated bkg. (pol2)","l");
     legend->AddEntry(signalFcn,"estimated signal (Gauss)","l");
     legend->Draw("same");
@@ -290,10 +308,11 @@ void SignalExtractionPt(const Double_t *xPtBins, const Int_t nPtBins, TH3D *inHi
     st->SetBorderSize(0);
     // Write canvas of fitted inv mass distr
     gROOT->SetBatch(kFALSE);
+    gPad->Update();
     c1->Update();
     c1->Write();
   }
-  gStyle->SetOptStat(0);
+  //gStyle->SetOptStat(0);
   // Go back to default dir in output file
   dir->cd("/");
 }
@@ -421,3 +440,4 @@ void make_results(const Char_t* fileNameData, const Char_t* fileNameEff, const C
   // TODO: add fit info on PtFitHists
   WriteToFile(outFile, isMC);
 }
+

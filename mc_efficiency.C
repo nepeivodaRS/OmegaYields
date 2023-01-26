@@ -139,6 +139,8 @@ void mc_efficiency(const Char_t* inFileName,
       AliAnalysisPIDCascadeParticle* trackMC = (AliAnalysisPIDCascadeParticle*)generatedOmega->At(i);
       if(TMath::Abs(trackMC->GetPt()) < 1.0 || TMath::Abs(trackMC->GetPt()) > 4.8)
         continue;
+      if(TMath::Abs(trackMC->GetEta()) > 0.8) // overcheck
+        continue;
       hGenOmegaMB->Fill(trackMC->GetPt());
       if(HMevent)
         hGenOmegaHM->Fill(trackMC->GetPt());
@@ -155,6 +157,8 @@ void mc_efficiency(const Char_t* inFileName,
 
       AliAnalysisPIDCascade* cascade = (AliAnalysisPIDCascade*)allCascades->At(i);
       if(cascade->GetPtCasc() < 1.0 || cascade->GetPtCasc() > 4.80)
+        continue;
+      if(cascade->GetEtaCasc() > 0.8)
         continue;
       if(!CheckCascOmegaToXiMass(cascade))
         continue;
