@@ -7,7 +7,7 @@
   root
   .L mc_efficiency.C+
 
-  mc_efficiency("./outputTreesMC/mc_tree_all.dat", "./outputEff/mc_Eff_sameBinning.root", 0)
+  mc_efficiency("./outputTreesMC/mc_tree_all.dat", "./outputEff/mc_Eff_26.root", 0)
 
 */
 

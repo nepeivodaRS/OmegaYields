@@ -207,6 +207,7 @@ void CreateRatioPlot(TH1D *h1In,TH1D *h2In, TFile* outFile){
 void SignalExtractionPt(const Double_t *xPtBins, const Int_t nPtBins, TH3D *inHist3D, Int_t leftCentr, Int_t rightCentr, TH1D* inHist, TFile* outFile){
   // Set stat box to show only mean and number of entries
   gStyle->SetOptStat("me");
+  gStyle->SetOptFit(1);
   // Create dir to store all the fitted hists in centrality region from 'leftCentr' to 'rightCentr' bin
   TDirectory* dir = outFile->mkdir(Form("PtFitHists_%s_from_%d_to_%d_centr", inHist3D->GetName(), leftCentr, rightCentr));
   dir->cd();
@@ -223,15 +224,16 @@ void SignalExtractionPt(const Double_t *xPtBins, const Int_t nPtBins, TH3D *inHi
     hProfileInvMassX->SetTitle(Form("M_{inv} in pt bins fit, %d bin",  i+1));
     hProfileInvMassX->SetXTitle("#it{M}_{inv} - #it{M}_{#Omega^{-} (#bar{#Omega}^{+})} [GeV/#it{c}^{2}]");
     TF1 *fitFcn = new TF1("fitFcn",fitFunctionG,-0.03, 0.03,6);
-    Double_t sigPickApprox = 20;
+    Double_t sigPickApprox = 20; // 0 guess for the first fit
     fitFcn->SetParameters(1,1,1,sigPickApprox,0,0.001);
     // fitFcn->SetNpx(1e5);
     // fitFcn->SetLineColor(kRed+1);
     TH1D* hProfileInvMassXFirstFit = (TH1D*)hProfileInvMassX->Clone();
-    hProfileInvMassXFirstFit->Fit("fitFcn","epr");
+    hProfileInvMassXFirstFit->Fit("fitFcn","eRL");
     Double_t par[6];
     fitFcn->GetParameters(par);
     par[5] = TMath::Abs(par[5]); // sometimes sigma is negative
+    par[3] = par[3]*par[5]*TMath::Power(TMath::TwoPi(), 0.5)/(0.06/nMinvBins); // from initial guess of A to S
     // Make a fit once again with initial guess based on the previous fit
     TF1 *fitFcnRedefined = new TF1("fitFcn2",fitFunctionRedifined,-0.03, 0.03,6);
     fitFcnRedefined->SetParameters(par);
@@ -240,14 +242,12 @@ void SignalExtractionPt(const Double_t *xPtBins, const Int_t nPtBins, TH3D *inHi
     // Create canvas for fitted inv mass
     TCanvas *c1 = new TCanvas(Form("PtFit_%d", i+1),"PtHist",10,10,1200,900);
     c1->cd();
-    TFitResultPtr FitResult = hProfileInvMassX->Fit("fitFcn2","eprS");
+    TFitResultPtr FitResult = hProfileInvMassX->Fit("fitFcn2","eRSL");
     fitFcnRedefined->GetParameters(par);
     // Fill histogram with fitted signal: integral divided by the bin width. And eval the error of each bin
-    //Double_t FillValue = par[3]*TMath::Power(TMath::TwoPi(), 0.5)*TMath::Abs(par[5])/(0.06/nMinvBins); // Abs cause sometimes negative ?sigma?
     Double_t FillValue = par[3];
-    //std::cout << "bin number: " << i+1 << " pick value: " << par[3] << " signal value: " << FillValue << std::endl;
+    std::cout << "bin number: " << i+1 << " signal value: " << FillValue << std::endl;
     inHist->Fill((xPtBins[i] + xPtBins[i+1])/2., FillValue);
-    //inHist->SetBinError(i+1, FillValue*std::pow((std::pow(FitResult->ParError(5)/par[5], 2) + std::pow(FitResult->ParError(3)/par[3], 2)), 0.5));
     inHist->SetBinError(i+1, FitResult->ParError(3));
     // Addition of fitted signal and background curves to our canvas
     TF1 *backFcn = new TF1("backFcn",background,-0.03,0.03,3);
@@ -295,17 +295,18 @@ void SignalExtractionPt(const Double_t *xPtBins, const Int_t nPtBins, TH3D *inHi
     omegaLabel.SetTextSize(0.0411899);
     omegaLabel.SetTextFont(42);
     omegaLabel.SetNDC();
-    omegaLabel.DrawLatex(0.1569, 0.688787, "#Omega^{-}+#bar{#Omega}^{+}");
+    omegaLabel.DrawLatex(0.1569, 0.574, "#Omega^{-}+#bar{#Omega}^{+}");
 
     // Settings of stat box
     gPad->Update(); // update to find 'stats' box
     TPaveStats *st = (TPaveStats*)hProfileInvMassX->FindObject("stats");
     //st->SetTextSize(0.03);
-    st->SetX1NDC(0.149);
-    st->SetX2NDC(0.290);
-    st->SetY1NDC(0.734);
-    st->SetY2NDC(0.797);
+    st->SetX1NDC(0.146);
+    st->SetX2NDC(0.363);
+    st->SetY1NDC(0.617);
+    st->SetY2NDC(0.801);
     st->SetBorderSize(0);
+    
     // Write canvas of fitted inv mass distr
     gROOT->SetBatch(kFALSE);
     gPad->Update();
@@ -429,15 +430,14 @@ void make_results(const Char_t* fileNameData, const Char_t* fileNameEff, const C
     hRaw[i]->Divide(hEff[i]);
     // Apply rapidity correction
     hRaw[i]->Divide(fRap);
-    hRaw[i]->GetYaxis()->SetTitle("(#Omega^{-}+#bar{#Omega}^{+}):  d#it{N}/d#it{p}_{T} ((GeV/#it{c})^{-1})");
+    hRaw[i]->GetYaxis()->SetTitle("(#Omega^{-}+#bar{#Omega}^{+}):  d^{2}#it{N}/d#it{p}_{T}d#it{y} ((GeV/#it{c})^{-1})");
     if(isMC){
       NormalizeHistogram(hGen[i]);
       hGen[i]->Divide(fRap);
-      hGen[i]->GetYaxis()->SetTitle("(#Omega^{-}+#bar{#Omega}^{+}): d#it{N}/d#it{p}_{T} ((GeV/#it{c})^{-1})");
+      hGen[i]->GetYaxis()->SetTitle("(#Omega^{-}+#bar{#Omega}^{+}): d^{2}#it{N}/d#it{p}_{T}d#it{y} ((GeV/#it{c})^{-1})");
       CreateRatioPlot(hRaw[i], hGen[i], outFile);
     }
   }
-  // TODO: add fit info on PtFitHists
   WriteToFile(outFile, isMC);
 }
 
