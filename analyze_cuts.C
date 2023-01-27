@@ -1,4 +1,4 @@
-#include "analyze_tree.h"
+#include "analyze_cuts.h"
 
 /*
   To run code:
@@ -6,10 +6,48 @@
 
   aliroot -l
 
-  .L analyze_tree.C+
+  .L analyze_cuts.C+
 
-  analyze_tree("./outputTreesMC/mc_tree_all.dat", "./outputAnal/mc_anal_27_MCclosure.root", 0, 1)
+  analyze_cuts("./outputTreesMC/mc_tree_all.dat", "./outputAnal/mc_anal_27_MCclosure.root", 0, 1)
 */
+void FillCutHists(Int_t SigType, AliAnalysisPIDCascade* cascade, AliAnalysisPIDCascadeEvent* event){
+  // Fill CutList hists with signals of specific type
+  AliAnalysisPIDCascadeV0* v0 = cascade->GetV0();
+  AliAnalysisPIDCascadeTrack* bachelor = cascade->GetBachAnalysisTrack();
+  const Double_t bachDCA = GetAbsImpactParameterXY(bachelor);
+  const Double_t negDCA  = GetAbsImpactParameterXY(v0->GetNegAnalysisTrack());
+  const Double_t posDCA  = GetAbsImpactParameterXY(v0->GetPosAnalysisTrack());
+  const Double_t cascPA     = cascade->GetCascCosinePA();
+  const Double_t cascR      = cascade->GetCascRadius();
+  const Double_t dMassOmega     = cascade->GetIMO() - massOmega;
+  const Double_t dMassLambda = v0->GetIML() - massLambda;
+  AliAnalysisPIDCascadeTrack* tr[3] = {cascade->GetBachAnalysisTrack(), 
+                                       cascade->GetV0()->GetPosAnalysisTrack(),
+                                       cascade->GetV0()->GetNegAnalysisTrack()};
+  if(cascade->GetCharge() < 0) {
+    AliAnalysisPIDCascadeTrack* dummy = tr[1];
+    tr[1] = tr[2];
+    tr[2] = dummy;
+  }
+
+  hOmegaInvMassVsPtCuts[SigType]->Fill(cascade->GetPtCasc(), dMassOmega, event->GetV0Mmultiplicity());
+  hLambdaInvMassVsPtCuts[SigType]->Fill(v0->GetPt(), dMassLambda, event->GetV0Mmultiplicity());
+
+  hCascPA[SigType]->Fill(cascPA);
+  hcascR[SigType]->Fill(cascR);
+  hPosDCA[SigType]->Fill(posDCA);
+  hNegDCA[SigType]->Fill(negDCA);
+  hBachDCA[SigType]->Fill(bachDCA);
+  hCascPVDCA[SigType]->Fill(cascade->GetCascDCAPV());
+  hCascROverPt[SigType]->Fill(cascade->GetCascRadius()/cascade->GetPtCasc());
+  hCascV0DCA[SigType]->Fill(cascade->GetV0DCA());
+  hV0DaughtersDCA[SigType]->Fill(v0->GetDCAV0Daughters());
+  hV0PA[SigType]->Fill(v0->GetV0CosinePA());
+  hV0R[SigType]->Fill(v0->GetRadius());
+  hV0PVDCA[SigType]->Fill(v0->GetDCAPV());
+  hV0ROverPt[SigType]->Fill(v0->GetRadius()/cascade->GetPtCasc());
+  hV0BachDCA[SigType]->Fill(cascade->GetCascDCA()) // the distance between the V0 and the bachelor track at the Secondary Vertex. Which should be small for true cascades.
+}
 
 void InitHists(){
   // Initialization of histograms
@@ -71,6 +109,81 @@ void InitHists(){
     InvMassList->Add(hOmegaInvMassVsPtTrue[i]);
   }
 
+  CutList = new TList();
+
+  for(Int_t i = 0; i < nSignalTypes; i++) {
+    hCascPA[i] = new TH1D(Form("hCascPA_%s", SignalTypeName[i]), "; cos(PA)",
+          60, 0.945, 1.005);
+    hCascPA[i]->Sumw2();
+
+    hcascR[i] = new TH1D(Form("hcascR_%s", SignalTypeName[i]), "; R_{Casc}",
+          100, 0, 20);
+    hcascR[i]->Sumw2();
+
+    hPosDCA[i] = new TH1D(Form("hPosDCA_%s", SignalTypeName[i]), "; DCA_{+}",
+          50, 0, 10);
+    hPosDCA[i]->Sumw2();
+
+    hNegDCA[i] = new TH1D(Form("hNegDCA_%s", SignalTypeName[i]), "; DCA_{-}",
+          50, 0, 10);
+    hNegDCA[i]->Sumw2();
+
+    hCascPVDCA[i] = new TH1D(Form("hCascPVDCA_%s", SignalTypeName[i]), "; DCA_{CascPV}",
+          100, 0, 10);
+    hCascPVDCA[i]->Sumw2();
+
+    hV0DaughtersDCA[i] = new TH1D(Form("hV0DaughtersDCA_%s", SignalTypeName[i]), "; DCA_{V0Daughters}",
+          10, 0, 2);
+    hV0DaughtersDCA[i]->Sumw2();
+
+    hV0PA[i] = new TH1D(Form("hV0PA_%s", SignalTypeName[i]), "; cos(V0PA)",
+          60, 0.945, 1.005);
+    hV0PA[i]->Sumw2();
+
+    hV0R[i] = new TH1D(Form("hV0R_%s", SignalTypeName[i]), "; R_{V0}",
+          100, 0, 30);
+    hV0R[i]->Sumw2();
+
+    hV0PVDCA[i] = new TH1D(Form("hV0PVDCA_%s", SignalTypeName[i]), "; DCA_{V0PV}",
+          50, 0, 5);
+    hV0PVDCA[i]->Sumw2();
+
+    hBachDCA[i] = new TH1D(Form("hBachDCA_%s", SignalTypeName[i]), "; DCA_{Bach}",
+          50, 0, 5);
+    hBachDCA[i]->Sumw2();
+
+    hCascROverPt[i] = new TH1D(Form("hCascROverPt_%s", SignalTypeName[i]), "; R_{casc}/P_{t}^{casc}",
+          60, 0, 30);
+    hCascROverPt[i]->Sumw2();
+
+    hV0ROverPt[i] = new TH1D(Form("hV0ROverPt_%s", SignalTypeName[i]), "; R_{V0}/P_{t}^{casc}",
+          100, 0, 50);
+    hV0ROverPt[i]->Sumw2();
+
+    hCascV0DCA[i] = new TH1D(Form("hCascV0DCA_%s", SignalTypeName[i]), "; DCA_{CascV0}",
+          30, 0, 15);
+    hCascV0DCA[i]->Sumw2();
+
+    hV0BachDCA[i] = new TH1D(Form("hV0BachDCA_%s", SignalTypeName[i]), "; DCA_{V0Bach}",
+          30, 0, 15);
+    hV0BachDCA[i]->Sumw2();
+
+    CutList->Add(hCascPA[i]);
+    CutList->Add(hcascR[i]);
+    CutList->Add(hPosDCA[i]);
+    CutList->Add(hNegDCA[i]);
+    CutList->Add(hCascPVDCA[i]);
+    CutList->Add(hV0DaughtersDCA[i]);
+    CutList->Add(hV0PA[i]);
+    CutList->Add(hV0R[i]);
+    CutList->Add(hV0PVDCA[i]);
+    CutList->Add(hBachDCA[i]);
+    CutList->Add(hCascROverPt[i]);
+    CutList->Add(hV0ROverPt[i]);
+    CutList->Add(hCascV0DCA[i]);
+    CutList->Add(hV0Bach[i]);
+  }
+
   hEventStat = new TH1I("hEventStat","",3,0,3);
 
   hCascStat = new TH1I("hCascStat","",9,0,9);
@@ -87,7 +200,7 @@ void WriteToFile(TFile* outFile){
   outFile->Close();
 }
 
-void analyze_tree(const Char_t* inFileName,
+void analyze_cuts(const Char_t* inFileName,
 		const Char_t* outFileName,
 		const Int_t maxEvents = 0,
     Bool_t isMC = kFALSE)
@@ -104,7 +217,6 @@ void analyze_tree(const Char_t* inFileName,
     tree = (TTree*)inFile->Get("tree");
     hVtxStatus = (TH1D*)inFile->Get("hVtxStatus");
   }
-
 
   AliAnalysisPIDCascadeEvent* event = 0;
   TClonesArray* allCascades = 0;
@@ -182,7 +294,7 @@ void analyze_tree(const Char_t* inFileName,
       AliAnalysisPIDCascade* cascade = (AliAnalysisPIDCascade*)allCascades->At(i);
       if(cascade->GetPtCasc() < 1.0 || cascade->GetPtCasc() > 4.80)
         continue;
-      if(cascade->GetEtaCasc() > 0.8)
+      if(cascade->GetEtaCasc() > 0.8) // needed to check
         continue;
 
       const Double_t dMassOmega     = cascade->GetIMO() - massOmega;
@@ -215,15 +327,47 @@ void analyze_tree(const Char_t* inFileName,
 
       hCascStat->Fill("Fast signal", 1);
 
+      FillCutHists(2, cascade, event);
+      if(isMC){
+        bIsRealOmegaCascade = IsRealOmegaCascade(cascade);
+        if(bIsRealOmegaCascade){
+          FillCutHists(0, cascade, event);
+        }
+        else{
+          FillCutHists(1, cascade, event);
+        }
+      }
+
       bPassedLoose = CheckCascLooseCuts(cascade);
       if(!bPassedLoose)
         continue;
+
+      FillCutHists(3, cascade, event);
+      if(isMC){
+        bIsRealOmegaCascade = IsRealOmegaCascade(cascade);
+        if(bIsRealOmegaCascade){
+          FillCutHists(5, cascade, event);
+        }
+        else{
+          FillCutHists(4, cascade, event);
+        }
+      }
 
       hCascStat->Fill("Loose", 1);
 
       bPassedStandard = CheckCascStandardCuts(cascade);
       if(bPassedStandard){
         hCascStat->Fill("Standard", 1);
+        FillCutHists(6, cascade, event);
+        if(isMC){
+          bIsRealOmegaCascade = IsRealOmegaCascade(cascade);
+          if(bIsRealOmegaCascade){
+            FillCutHists(8, cascade, event);
+          }
+          else{
+            FillCutHists(7, cascade, event);
+          }
+        }
         Int_t bin = 1;
         if(cascade->GetCharge() < 0){bin = 0;}
           hOmegaInvMassVsPt[bin]->Fill(cascade->GetPtCasc(), dMassOmega, event->GetV0Mmultiplicity());
@@ -240,6 +384,16 @@ void analyze_tree(const Char_t* inFileName,
       bPassedTight = CheckCascTightCuts(cascade);
       if(bPassedTight){
         hCascStat->Fill("Tight", 1);
+        FillCutHists(9, cascade, event);
+        if(isMC){
+          bIsRealOmegaCascade = IsRealOmegaCascade(cascade);
+          if(bIsRealOmegaCascade){
+            FillCutHists(11, cascade, event);
+          }
+          else{
+            FillCutHists(10, cascade, event);
+          }
+        }
       }
     }
   }
