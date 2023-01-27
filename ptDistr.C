@@ -4,7 +4,7 @@
 /*
   .L ptDistr.C+
 
-  make_results("./outputAnal/mc_anal_27_mc_closure.root", "./outputEff/mc_Eff_26.root", "./outputPtHists/PtHist_27.root", 1)
+  make_results("./outputAnal/mc_anal_27_MCclosure.root", "./outputEff/mc_Eff_26.root", "./outputPtHists/PtHist_27.root", 1)
   
  */
 
@@ -213,6 +213,9 @@ void SignalExtractionPt(const Double_t *xPtBins, const Int_t nPtBins, TH3D *inHi
   double mean[7] = {0};
   double errBins[7] = {0};
   double errMean[7] = {0};
+  // Setup for Signal graph
+  double signal[7] = {0};
+  double errSignal[7] = {0};
   // Create dir to store all the fitted hists in centrality region from 'leftCentr' to 'rightCentr' bin
   TDirectory* dir = outFile->mkdir(Form("PtFitHists_%s_from_%d_to_%d_centr", inHist3D->GetName(), leftCentr, rightCentr));
   dir->cd();
@@ -245,7 +248,7 @@ void SignalExtractionPt(const Double_t *xPtBins, const Int_t nPtBins, TH3D *inHi
     fitFcnRedefined->SetNpx(1e5);
     fitFcnRedefined->SetLineColor(kRed+1);
     // Create canvas for fitted inv mass
-    TCanvas *c1 = new TCanvas(Form("PtFit_%d_from_%d_to_%d", i+1, leftCentr, rightCentr),"PtHist",10,10,1200,900);
+    TCanvas *c1 = new TCanvas(Form("InvMassFit_bin_%d_from_%d_to_%d_centr", i+1, leftCentr, rightCentr),"PtHist",10,10,1200,900);
     c1->cd();
     TFitResultPtr FitResult = hProfileInvMassX->Fit("fitFcn2","eRSL");
     fitFcnRedefined->GetParameters(par);
@@ -257,6 +260,9 @@ void SignalExtractionPt(const Double_t *xPtBins, const Int_t nPtBins, TH3D *inHi
     // Points for Gaussian mean evolution graph
     mean[i] = par[4];
     errMean[i] = FitResult->ParError(4);
+    // Points for signal graph
+    signal[i] = par[3];
+    errSignal[i] = FitResult->ParError(3);
     // Addition of fitted signal and background curves to our canvas
     TF1 *backFcn = new TF1("backFcn",background,-0.03,0.03,3);
     TF1 *signalFcn = new TF1("signalFcn",GAUSSredifined,-0.03,0.03,3);
@@ -334,6 +340,115 @@ void SignalExtractionPt(const Double_t *xPtBins, const Int_t nPtBins, TH3D *inHi
   c2->Update();
   gROOT->SetBatch(kFALSE);
   c2->Write();
+  // Plot the signal evolution
+  gROOT->SetBatch(kTRUE);
+  TGraphErrors *NumberOfCascades = new TGraphErrors(7, bins, signal, errBins, errSignal);
+  NumberOfCascades->SetTitle(Form("Number_of_cascades_for_%s_from_%d_to_%d_mult", inHist3D->GetName(), leftCentr, rightCentr));
+  NumberOfCascades->GetXaxis()->SetTitle("Bin number");
+  NumberOfCascades->GetYaxis()->SetTitle("Number of cascades");
+  NumberOfCascades->SetMarkerStyle(20);
+  TCanvas *c3 = new TCanvas(Form("Number_of_cascades_for_%s_from_%d_to_%d_mult", inHist3D->GetName(), leftCentr, rightCentr),"PtHist",10,10,1200,900);
+  c3->cd();
+  NumberOfCascades->Draw("AP");
+  c3->Update();
+  gROOT->SetBatch(kFALSE);
+  c3->Write();
+  // Go back to default dir in output file
+  dir->cd("/");
+}
+
+void SignalMC(const Double_t *xPtBins, const Int_t nPtBins, TH3D *inHist3D, Int_t leftCentr, Int_t rightCentr, TH1D* inHist, TFile* outFile){
+  // Set stat box to show only mean and number of entries
+  gStyle->SetOptStat("me");
+  // Setup for Signal graph
+  double bins[7] = {1, 2, 3, 4, 5, 6, 7};
+  double errBins[7] = {0};
+  double signal[7] = {0};
+  double errSignal[7] = {0};
+  // Create dir to store all the fitted hists in centrality region from 'leftCentr' to 'rightCentr' bin
+  TDirectory* dir = outFile->mkdir(Form("PtFitHists_%s_from_%d_to_%d_centr", inHist3D->GetName(), leftCentr, rightCentr));
+  dir->cd();
+  // Clone hist not to change the original one
+  TH3D* invMassHist = (TH3D*)inHist3D->Clone();
+  invMassHist->GetZaxis()->SetRange(leftCentr, rightCentr);
+  invMassHist->Write();
+  TH2D* hProfileInvMassZ = static_cast<TH2D*>(invMassHist->Project3D("xy")); // doesn't work w/o static cast; projects in range that was set above
+  hProfileInvMassZ->Write();
+  // Loop over all PtBins and fit inv mass spectra
+  for(Int_t i = 0; i < nPtBins; ++i) {
+    gROOT->SetBatch(kTRUE);
+    TH1D* hProfileInvMassX = hProfileInvMassZ->ProjectionX("_px", hProfileInvMassZ->GetYaxis()->FindBin(xPtBins[i] + 0.00001), hProfileInvMassZ->GetYaxis()->FindBin(xPtBins[i+1]-0.00001));
+    hProfileInvMassX->SetTitle(Form("M_{inv} in pt bins fit, %d bin",  i+1));
+    hProfileInvMassX->SetXTitle("#it{M}_{inv} - #it{M}_{#Omega^{-} (#bar{#Omega}^{+})} [GeV/#it{c}^{2}]");
+
+    TCanvas *c1 = new TCanvas(Form("InvMass_bin_%d_from_%d_to_%d", i+1, leftCentr, rightCentr),"PtHist",10,10,1200,900);
+    c1->cd();
+    // Points for signal graph
+    signal[i] = hProfileInvMassX->GetEntries();
+    errSignal[i] = 0;
+
+    hProfileInvMassX->Draw();
+
+    // Settings of Legend
+    TLegend *legend=new TLegend(0.6,0.65,0.88,0.85);
+    legend->SetTextFont(42);
+    legend->SetTextSize(0.03);
+    legend->SetLineColorAlpha(0.,0.);
+    legend->SetFillColorAlpha(0.,0.);
+    legend->SetBorderSize(0.);
+    legend->AddEntry(hProfileInvMassX,"Data (stat uncert.)","lpe");
+    legend->Draw("same");
+
+    // Settings of latex label of pt range
+    TLatex ptRange;
+    ptRange.SetTextSize(0.03);
+    ptRange.SetTextFont(42);
+    ptRange.SetNDC();
+    ptRange.DrawLatex(0.155, 0.814, Form("%.2f GeV/#it{c} < #it{p}_{T} < %.2f GeV/#it{c}", xPtBins[i], xPtBins[i+1]));
+
+    // Settings of latex label of SqrtSnn
+    TLatex sqrtSnn;
+    sqrtSnn.SetTextSize(0.03);
+    sqrtSnn.SetTextFont(42);
+    sqrtSnn.SetNDC();
+    sqrtSnn.DrawLatex(0.155, 0.850, "ALICE pp #sqrt{#it{s}} = 13 TeV");
+
+    // Settings of latex label of OmegaLabel
+    TLatex omegaLabel;
+    omegaLabel.SetTextSize(0.0411899);
+    omegaLabel.SetTextFont(42);
+    omegaLabel.SetNDC();
+    omegaLabel.DrawLatex(0.1569, 0.574, "#Omega^{-}+#bar{#Omega}^{+}");
+
+    // Settings of stat box
+    gPad->Update(); // update to find 'stats' box
+    TPaveStats *st = (TPaveStats*)hProfileInvMassX->FindObject("stats");
+    //st->SetTextSize(0.03);
+    st->SetX1NDC(0.146);
+    st->SetX2NDC(0.363);
+    st->SetY1NDC(0.617);
+    st->SetY2NDC(0.801);
+    st->SetBorderSize(0);
+
+    // Write canvas of MC inv mass distr
+    gROOT->SetBatch(kFALSE);
+    gPad->Update();
+    c1->Update();
+    c1->Write();
+  }
+  // Plot the signal evolution
+  gROOT->SetBatch(kTRUE);
+  TGraphErrors *NumberOfCascades = new TGraphErrors(7, bins, signal, errBins, errSignal);
+  NumberOfCascades->SetTitle(Form("Number of cascades for %s from %d to %d mult", inHist3D->GetName(), leftCentr, rightCentr));
+  NumberOfCascades->GetXaxis()->SetTitle("Bin number");
+  NumberOfCascades->GetYaxis()->SetTitle("Number of cascades");
+  NumberOfCascades->SetMarkerStyle(20);
+  TCanvas *c3 = new TCanvas(Form("Number_of_cascades_for_%s_from_%d_to_%d_mult", inHist3D->GetName(), leftCentr, rightCentr),"PtHist",10,10,1200,900);
+  c3->cd();
+  NumberOfCascades->Draw("AP");
+  c3->Update();
+  gROOT->SetBatch(kFALSE);
+  c3->Write();
   // Go back to default dir in output file
   dir->cd("/");
 }
@@ -393,7 +508,7 @@ void make_results(const Char_t* fileNameData, const Char_t* fileNameEff, const C
     hGenOmegaHM = (TH1D*)ListOfPtHists->FindObject("hGenOmegaHM");
     hGenOmegaVHM = (TH1D*)ListOfPtHists->FindObject("hGenOmegaVHM");
 
-    TH3D* hInvMassOmegaMC = (TH3D*)ListOfHists->FindObject("hOmegaInvMassVsPtTrue_OmegaBar");
+    TH3D* hInvMassOmegaMC = (TH3D*)ListOfHists->FindObject("hOmegaInvMassVsPtTrue_Omega");
     TH3D* hInvMassOmegaBarMC = (TH3D*)ListOfHists->FindObject("hOmegaInvMassVsPtTrue_OmegaBar");
     hInvMassSumMC = (TH3D*)hInvMassOmegaMC->Clone();
     TH3D* histToAddMC  = (TH3D*)hInvMassOmegaBarMC->Clone();
@@ -421,7 +536,7 @@ void make_results(const Char_t* fileNameData, const Char_t* fileNameEff, const C
   SignalExtractionPt(xBinsHM, nPtBinsHM, hInvMassSum, 1, 1, hOmegaVHM, outFile); // 1 - 1 means 0 - 1 %
 
   if(isMC){
-    SignalExtractionPt(xBinsMB, nPtBinsMB, hInvMassSumMC, 1, 11, hOmegaMBMC, outFile); // 1 - 11 means 0 - 100 %
+    SignalMC(xBinsMB, nPtBinsMB, hInvMassSumMC, 1, 11, hOmegaMBMC, outFile); // 1 - 11 means 0 - 100 %
   }
 
   // Setup rapidity correction TF1
