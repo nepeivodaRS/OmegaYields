@@ -8,7 +8,7 @@
 
   .L analyze_cuts.C+
 
-  analyze_cuts("./outputTreesMC/mc_tree_all.dat", "./outputAnal/mc_anal_27_MCclosure.root", 0, 1)
+  analyze_cuts("./outputTreesMC/mc_tree_all.dat", "./outputCuts/mc_cuts_27.root", 0, 1)
 */
 void FillCutHists(Int_t SigType, AliAnalysisPIDCascade* cascade, AliAnalysisPIDCascadeEvent* event){
   // Fill CutList hists with signals of specific type
@@ -181,7 +181,7 @@ void InitHists(){
     CutList->Add(hCascROverPt[i]);
     CutList->Add(hV0ROverPt[i]);
     CutList->Add(hCascV0DCA[i]);
-    CutList->Add(hV0Bach[i]);
+    CutList->Add(hV0BachDCA[i]);
   }
 
   hEventStat = new TH1I("hEventStat","",3,0,3);
