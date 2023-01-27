@@ -19,8 +19,8 @@ void FillCutHists(Int_t SigType, AliAnalysisPIDCascade* cascade, AliAnalysisPIDC
   const Double_t posDCA  = GetAbsImpactParameterXY(v0->GetPosAnalysisTrack());
   const Double_t cascPA     = cascade->GetCascCosinePA();
   const Double_t cascR      = cascade->GetCascRadius();
-  const Double_t dMassOmega     = cascade->GetIMO() - massOmega;
-  const Double_t dMassLambda = v0->GetIML() - massLambda;
+  const Double_t dMassOmegaCuts     = cascade->GetIMO() - massOmega;
+  const Double_t dMassLambdaCuts = v0->GetIML() - massLambda;
   AliAnalysisPIDCascadeTrack* tr[3] = {cascade->GetBachAnalysisTrack(), 
                                        cascade->GetV0()->GetPosAnalysisTrack(),
                                        cascade->GetV0()->GetNegAnalysisTrack()};
@@ -29,9 +29,9 @@ void FillCutHists(Int_t SigType, AliAnalysisPIDCascade* cascade, AliAnalysisPIDC
     tr[1] = tr[2];
     tr[2] = dummy;
   }
-
-  hOmegaInvMassVsPtCuts[SigType]->Fill(cascade->GetPtCasc(), dMassOmega, event->GetV0Mmultiplicity());
-  hLambdaInvMassVsPtCuts[SigType]->Fill(v0->GetPt(), dMassLambda, event->GetV0Mmultiplicity());
+  std::cout << "HELLO" << std::endl;
+  hOmegaInvMassVsPtCuts[SigType]->Fill(cascade->GetPtCasc(), dMassOmegaCuts, event->GetV0Mmultiplicity());
+  hLambdaInvMassVsPtCuts[SigType]->Fill(v0->GetPt(), dMassLambdaCuts, event->GetV0Mmultiplicity());
 
   hCascPA[SigType]->Fill(cascPA);
   hcascR[SigType]->Fill(cascR);
@@ -305,8 +305,7 @@ void analyze_cuts(const Char_t* inFileName,
 
       hCascStat->Fill("#Xi check", 1);
 
-      const Double_t deltaM     = cascade->GetIMO() - massOmega;
-      if(TMath::Abs(deltaM) > 0.029999999)
+      if(TMath::Abs(dMassOmega) > 0.029999999)
         continue;
 
       hCascStat->Fill("M_{#Omega} check", 1);
