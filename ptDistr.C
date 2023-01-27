@@ -240,7 +240,7 @@ void SignalExtractionPt(const Double_t *xPtBins, const Int_t nPtBins, TH3D *inHi
     fitFcnRedefined->SetNpx(1e5);
     fitFcnRedefined->SetLineColor(kRed+1);
     // Create canvas for fitted inv mass
-    TCanvas *c1 = new TCanvas(Form("PtFit_%d", i+1),"PtHist",10,10,1200,900);
+    TCanvas *c1 = new TCanvas(Form("PtFit_%d_from_%d_to_%d", i+1, leftCentr, rightCentr),"PtHist",10,10,1200,900);
     c1->cd();
     TFitResultPtr FitResult = hProfileInvMassX->Fit("fitFcn2","eRSL");
     fitFcnRedefined->GetParameters(par);
@@ -306,7 +306,7 @@ void SignalExtractionPt(const Double_t *xPtBins, const Int_t nPtBins, TH3D *inHi
     st->SetY1NDC(0.617);
     st->SetY2NDC(0.801);
     st->SetBorderSize(0);
-    
+
     // Write canvas of fitted inv mass distr
     gROOT->SetBatch(kFALSE);
     gPad->Update();

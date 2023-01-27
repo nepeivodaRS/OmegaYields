@@ -39,6 +39,7 @@ const Char_t * pdgNameOmega[nSpecies] = {"Omega", "OmegaBar"};
 
 // Inv mass 3d hist
 TH3D *hOmegaInvMassVsPt[nSpecies] = { 0 };
+TH3D *hOmegaInvMassVsPtTrue[nSpecies] = { 0 };
 TH2D *hOmegaInconsistencyXi;
 
 // Binning used
