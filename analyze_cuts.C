@@ -29,24 +29,25 @@ void FillCutHists(Int_t SigType, AliAnalysisPIDCascade* cascade, AliAnalysisPIDC
     tr[1] = tr[2];
     tr[2] = dummy;
   }
-
+  std::cout << "HELLO 1" << std::endl;
   hOmegaInvMassVsPtCuts[SigType]->Fill(cascade->GetPtCasc(), dMassOmegaCuts, event->GetV0Mmultiplicity());
   hLambdaInvMassVsPtCuts[SigType]->Fill(v0->GetPt(), dMassLambdaCuts, event->GetV0Mmultiplicity());
-
+  std::cout << "HELLO 2" << std::endl;
   hCascPA[SigType]->Fill(cascPA);
   hcascR[SigType]->Fill(cascR);
   hPosDCA[SigType]->Fill(posDCA);
   hNegDCA[SigType]->Fill(negDCA);
   hBachDCA[SigType]->Fill(bachDCA);
   hCascPVDCA[SigType]->Fill(cascade->GetCascDCAPV());
+  std::cout << "HELLO 3" << std::endl;
   hCascROverPt[SigType]->Fill(cascade->GetCascRadius()/cascade->GetPtCasc());
   hCascV0DCA[SigType]->Fill(cascade->GetV0DCA());
   hV0DaughtersDCA[SigType]->Fill(v0->GetDCAV0Daughters());
   hV0PA[SigType]->Fill(v0->GetV0CosinePA());
   hV0R[SigType]->Fill(v0->GetRadius());
   hV0PVDCA[SigType]->Fill(v0->GetDCAPV());
+  std::cout << "HELLO 4" << std::endl;
   hV0ROverPt[SigType]->Fill(v0->GetRadius()/cascade->GetPtCasc());
-  std::cout << "HELLO" << std::endl;
   hV0BachDCA[SigType]->Fill(cascade->GetCascDCA()); // the distance between the V0 and the bachelor track at the Secondary Vertex. Which should be small for true cascades.
 }
 
