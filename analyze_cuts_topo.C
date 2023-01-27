@@ -8,7 +8,7 @@
 
   .L analyze_cuts_topo.C+
 
-  analyze_cuts_topo("./outputAnal/mc_anal_26.root", "./outputCuts/mc_cuts.root")
+  analyze_cuts_topo("./outputCuts/mc_cuts_27.root", "./outputCuts/mc_cuts_results_27.root")
 */
 
 void DrawCutLines(Int_t nAxis, Double_t Height){
@@ -241,7 +241,7 @@ void analyze_cuts_topo(const Char_t* inFileName, const Char_t* outFileName){
     hV0PVDCA[i] = (TH1D*)ListOfCutHists->FindObject(Form("hV0PVDCA_%s", SignalTypeName[i]));
     hV0ROverPt[i] = (TH1D*)ListOfCutHists->FindObject(Form("hV0ROverPt_%s", SignalTypeName[i]));
     hBachDCA[i] = (TH1D*)ListOfCutHists->FindObject(Form("hBachDCA_%s", SignalTypeName[i]));
-    hV0Bach[i] = (TH1D*)ListOfCutHists->FindObject(Form("hV0BachDCA_%s", SignalTypeName[i]));
+    hV0BachDCA[i] = (TH1D*)ListOfCutHists->FindObject(Form("hV0BachDCA_%s", SignalTypeName[i]));
   }
 
   // Setup Latex var

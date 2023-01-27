@@ -44,7 +44,7 @@ TH1D *hV0PA[nSignalTypes] = { 0 };
 TH1D *hV0R[nSignalTypes] = { 0 };
 TH1D *hV0PVDCA[nSignalTypes] = { 0 };
 TH1D *hV0ROverPt[nSignalTypes] = { 0 };
-TH1D *hV0BachDCA = { 0 };
+TH1D *hV0BachDCA[nSignalTypes] = { 0 };
 
 TList *ListOfCutHists;
 TList *ListFakeToRecRatiosTight;

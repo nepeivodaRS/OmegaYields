@@ -205,6 +205,7 @@ void InitHists(){
 void WriteToFile(TFile* outFile){
   // Write to file
   outFile->cd();
+  outFile->WriteObject(CutList, "ListOfCuts");
   outFile->WriteObject(PtHistList, "ListOfPtHists");
   outFile->WriteObject(InvMassList, "ListOfEInvMassHists");
   outFile->WriteObject(hEventStat, "EventStatistics");
