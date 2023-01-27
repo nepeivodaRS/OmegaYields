@@ -4,7 +4,7 @@
 /*
   .L ptDistr.C+
 
-  make_results("./outputAnal/mc_anal_22.root", "./outputEff/mc_Eff_22.root", "./outputPtHists/PtHist_22.root", 1)
+  make_results("./outputAnal/mc_anal_27_mc_closure.root", "./outputEff/mc_Eff_26.root", "./outputPtHists/PtHist_27.root", 1)
   
  */
 
@@ -208,6 +208,11 @@ void SignalExtractionPt(const Double_t *xPtBins, const Int_t nPtBins, TH3D *inHi
   // Set stat box to show only mean and number of entries
   gStyle->SetOptStat("me");
   gStyle->SetOptFit(1);
+  // Setup for Gaussian mean graph
+  double bins[7] = {1, 2, 3, 4, 5, 6, 7};
+  double mean[7] = {0};
+  double errBins[7] = {0};
+  double errMean[7] = {0};
   // Create dir to store all the fitted hists in centrality region from 'leftCentr' to 'rightCentr' bin
   TDirectory* dir = outFile->mkdir(Form("PtFitHists_%s_from_%d_to_%d_centr", inHist3D->GetName(), leftCentr, rightCentr));
   dir->cd();
@@ -249,6 +254,9 @@ void SignalExtractionPt(const Double_t *xPtBins, const Int_t nPtBins, TH3D *inHi
     std::cout << "bin number: " << i+1 << " signal value: " << FillValue << std::endl;
     inHist->Fill((xPtBins[i] + xPtBins[i+1])/2., FillValue);
     inHist->SetBinError(i+1, FitResult->ParError(3));
+    // Points for Gaussian mean evolution graph
+    mean[i] = par[4];
+    errMean[i] = FitResult->ParError(4);
     // Addition of fitted signal and background curves to our canvas
     TF1 *backFcn = new TF1("backFcn",background,-0.03,0.03,3);
     TF1 *signalFcn = new TF1("signalFcn",GAUSSredifined,-0.03,0.03,3);
@@ -313,7 +321,19 @@ void SignalExtractionPt(const Double_t *xPtBins, const Int_t nPtBins, TH3D *inHi
     c1->Update();
     c1->Write();
   }
-  //gStyle->SetOptStat(0);
+  // Plot the Gaussian mean fit value evolution
+  gROOT->SetBatch(kTRUE);
+  TGraphErrors *MeanGaussFit = new TGraphErrors(7, bins, mean, errBins, errMean);
+  MeanGaussFit->SetTitle(Form("#mu of the Gaussain fit for %s from %d to %d mult", inHist3D->GetName(), leftCentr, rightCentr));
+  MeanGaussFit->GetXaxis()->SetTitle("Bin number");
+  MeanGaussFit->GetYaxis()->SetTitle("#mu");
+  MeanGaussFit->SetMarkerStyle(20);
+  TCanvas *c2 = new TCanvas(Form("#mu of the Gaussain fit for %s from %d to %d mult", inHist3D->GetName(), leftCentr, rightCentr),"PtHist",10,10,1200,900);
+  c2->cd();
+  MeanGaussFit->Draw("AP");
+  c2->Update();
+  gROOT->SetBatch(kFALSE);
+  c2->Write();
   // Go back to default dir in output file
   dir->cd("/");
 }
@@ -372,11 +392,20 @@ void make_results(const Char_t* fileNameData, const Char_t* fileNameEff, const C
     hGenOmegaMB = (TH1D*)ListOfPtHists->FindObject("hGenOmegaMB");
     hGenOmegaHM = (TH1D*)ListOfPtHists->FindObject("hGenOmegaHM");
     hGenOmegaVHM = (TH1D*)ListOfPtHists->FindObject("hGenOmegaVHM");
+
+    TH3D* hInvMassOmegaMC = (TH3D*)ListOfHists->FindObject("hOmegaInvMassVsPtTrue_OmegaBar");
+    TH3D* hInvMassOmegaBarMC = (TH3D*)ListOfHists->FindObject("hOmegaInvMassVsPtTrue_OmegaBar");
+    hInvMassSumMC = (TH3D*)hInvMassOmegaMC->Clone();
+    TH3D* histToAddMC  = (TH3D*)hInvMassOmegaBarMC->Clone();
+    hInvMassSumMC->Add(histToAddMC);
   }
 
   // Setup hists
   hOmegaMB = new TH1D("hOmegaMB", "; #it{p}_{T} (GeV/c)", nPtBinsMB, xBinsMB);
   hOmegaMB->Sumw2();
+
+  hOmegaMBMC = new TH1D("hOmegaMBMC", "; #it{p}_{T} (GeV/c)", nPtBinsMB, xBinsMB);
+  hOmegaMBMC->Sumw2();
 
   hOmegaHM = new TH1D("hOmegaHM", ";  #it{p}_{T} (GeV/c)", nPtBinsHM, xBinsHM);
   hOmegaHM->Sumw2();
@@ -390,6 +419,10 @@ void make_results(const Char_t* fileNameData, const Char_t* fileNameEff, const C
   SignalExtractionPt(xBinsMB, nPtBinsMB, hInvMassSum, 1, 11, hOmegaMB, outFile); // 1 - 11 means 0 - 100 %
   SignalExtractionPt(xBinsHM, nPtBinsHM, hInvMassSum, 1, 3, hOmegaHM, outFile); // 1 - 3 means 0 - 10 %
   SignalExtractionPt(xBinsHM, nPtBinsHM, hInvMassSum, 1, 1, hOmegaVHM, outFile); // 1 - 1 means 0 - 1 %
+
+  if(isMC){
+    SignalExtractionPt(xBinsMB, nPtBinsMB, hInvMassSumMC, 1, 11, hOmegaMBMC, outFile); // 1 - 11 means 0 - 100 %
+  }
 
   // Setup rapidity correction TF1
   TF1* fRap = new TF1("fRap", rap_correction, 0.0, 50.0, 2);

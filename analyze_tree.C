@@ -8,7 +8,7 @@
 
   .L analyze_tree.C+
 
-  analyze_tree("./outputTreesMC/mc_tree_all.dat", "./outputAnal/mc_anal_26.root", 0, 1)
+  analyze_tree("./outputTreesMC/mc_tree_all.dat", "./outputAnal/mc_anal_27.root", 0, 1)
 */
 
 void InitHists(){
@@ -230,7 +230,7 @@ void analyze_tree(const Char_t* inFileName,
         hOmegaInconsistencyXi->Fill(dMassXi, dMassOmega);
         // MC closure for signal inside reconstructed
         if(isMC){
-          if(!IsRealOmegaCascade(cascade)){
+          if(IsRealOmegaCascade(cascade)){
             if(cascade->GetCharge() < 0){bin = 0;}
               hOmegaInvMassVsPtTrue[bin]->Fill(cascade->GetPtCasc(), dMassOmega, event->GetV0Mmultiplicity());                  
           }

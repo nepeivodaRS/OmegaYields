@@ -48,6 +48,7 @@ TFile* outFile;
 TFile* fileEff;
 
 TH1D* hOmegaMB;
+TH1D* hOmegaMBMC;
 TH1D* hOmegaHM;
 TH1D* hOmegaVHM;
 
@@ -58,3 +59,5 @@ TH1D* hGenOmegaVHM;
 TH1D* hEffOmegaMB;
 TH1D* hEffOmegaHM;
 TH1D* hEffOmegaVHM;
+
+TH3D* hInvMassSumMC;
