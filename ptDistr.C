@@ -2,9 +2,9 @@
 #include "ptDistr.h"
 
 /*
-  .L ptDistr.C+
+  .L ptDistr.C
 
-  make_results("./outputAnal/mc_anal_27_MCclosure.root", "./outputEff/mc_Eff_26.root", "./outputPtHists/PtHist_27.root", 1)
+  make_results("./outputAnal/mc_anal_27_MCclosureFixed.root", "./outputEff/mc_Eff_26.root", "./outputPtHists/PtHist_27.root", 1)
   
  */
 
@@ -396,7 +396,7 @@ void SignalMC(const Double_t *xPtBins, const Int_t nPtBins, TH3D *inHist3D, Int_
     legend->SetLineColorAlpha(0.,0.);
     legend->SetFillColorAlpha(0.,0.);
     legend->SetBorderSize(0.);
-    legend->AddEntry(hProfileInvMassX,"Data (stat uncert.)","lpe");
+    legend->AddEntry(hProfileInvMassX,"Real signal","lpe");
     legend->Draw("same");
 
     // Settings of latex label of pt range
