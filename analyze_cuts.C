@@ -191,7 +191,7 @@ void InitHists(){
 
     hLambdaInvMassVsPtCuts[i] = new TH3D(Form("hLambdaInvMassVsPtCuts_%s", SignalTypeName[i]), "M_{inv} vs p_{T}; p_{T}^{V0} [GeV/c]; M_{inv} - M_{#Lambda} [GeV/c^{2}]; Centrality V0M",
             nPtBinsMB, xBins, nMinvBins, minvBins, nCentrBins, xCentrBins);
-    hLambdaInvMassVsPt[i]->Sumw2();
+    hLambdaInvMassVsPtCuts[i]->Sumw2();
 
     CutList->Add(hOmegaInvMassVsPtCuts[i]);
     CutList->Add(hLambdaInvMassVsPtCuts[i]);
