@@ -29,7 +29,7 @@ void FillCutHists(Int_t SigType, AliAnalysisPIDCascade* cascade, AliAnalysisPIDC
     tr[1] = tr[2];
     tr[2] = dummy;
   }
-  std::cout << "HELLO" << std::endl;
+
   hOmegaInvMassVsPtCuts[SigType]->Fill(cascade->GetPtCasc(), dMassOmegaCuts, event->GetV0Mmultiplicity());
   hLambdaInvMassVsPtCuts[SigType]->Fill(v0->GetPt(), dMassLambdaCuts, event->GetV0Mmultiplicity());
 
@@ -46,6 +46,7 @@ void FillCutHists(Int_t SigType, AliAnalysisPIDCascade* cascade, AliAnalysisPIDC
   hV0R[SigType]->Fill(v0->GetRadius());
   hV0PVDCA[SigType]->Fill(v0->GetDCAPV());
   hV0ROverPt[SigType]->Fill(v0->GetRadius()/cascade->GetPtCasc());
+  std::cout << "HELLO" << std::endl;
   hV0BachDCA[SigType]->Fill(cascade->GetCascDCA()); // the distance between the V0 and the bachelor track at the Secondary Vertex. Which should be small for true cascades.
 }
 
