@@ -46,7 +46,7 @@ void FillCutHists(Int_t SigType, AliAnalysisPIDCascade* cascade, AliAnalysisPIDC
   hV0R[SigType]->Fill(v0->GetRadius());
   hV0PVDCA[SigType]->Fill(v0->GetDCAPV());
   hV0ROverPt[SigType]->Fill(v0->GetRadius()/cascade->GetPtCasc());
-  hV0BachDCA[SigType]->Fill(cascade->GetCascDCA()) // the distance between the V0 and the bachelor track at the Secondary Vertex. Which should be small for true cascades.
+  hV0BachDCA[SigType]->Fill(cascade->GetCascDCA()); // the distance between the V0 and the bachelor track at the Secondary Vertex. Which should be small for true cascades.
 }
 
 void InitHists(){
