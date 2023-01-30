@@ -57,8 +57,32 @@ void InitHists(){
           100, -2, 2);
   hRapidityGen->Sumw2();
 
-  RapidityList->Add(hRapidityGen);
+  hRapidityCascades = new TH1D("hRapidityCascades", ";  p_{T} [GeV/c]",
+          100, -2, 2);
+  hRapidityCascades->Sumw2();
 
+  hPseudoRapidityGen = new TH1D("hPseudoRapidityGen", ";  p_{T} [GeV/c]",
+          100, -2, 2);
+  hPseudoRapidityGen->Sumw2();
+
+  hPseudoRapidityCascades = new TH1D("hPseudoRapidityCascades", ";  p_{T} [GeV/c]",
+          100, -2, 2);
+  hPseudoRapidityCascades->Sumw2();
+
+  hRapidityCascadesStandard = new TH1D("hRapidityCascadesStandard", ";  p_{T} [GeV/c]",
+          100, -2, 2);
+  hRapidityCascadesStandard->Sumw2();
+
+  hPseudoRapidityCascadesStandard = new TH1D("hPseudoRapidityCascadesStandard", ";  p_{T} [GeV/c]",
+          100, -2, 2);
+  hPseudoRapidityCascadesStandard->Sumw2();
+
+  RapidityList->Add(hRapidityGen);
+  RapidityList->Add(hPseudoRapidityGen);
+  RapidityList->Add(hRapidityCascades);
+  RapidityList->Add(hPseudoRapidityCascades);
+  RapidityList->Add(hRapidityCascadesStandard);
+  RapidityList->Add(hPseudoRapidityCascadesStandard);
 
   InvMassList = new TList();
 
@@ -83,6 +107,14 @@ void InitHists(){
   hEventStat = new TH1I("hEventStat","",3,0,3);
 
   hCascStat = new TH1I("hCascStat","",9,0,9);
+}
+
+Double_t CalcRapidityOmega(AliAnalysisPIDCascade* cascade){
+  Double_t pz = cascade->GetPtCasc()*TMath::SinH(cascade->GetEtaCasc());
+  Double_t p = cascade->GetPtCasc()*TMath::CosH(cascade->GetEtaCasc());
+  Double_t energy = TMath::Sqrt(p*p + massOmega*massOmega);
+  Double_t RapValue = 0.5*TMath::Log((energy + pz)/(energy - pz));
+  return RapValue;
 }
 
 void WriteToFile(TFile* outFile){
@@ -169,6 +201,7 @@ void analyze_rapidity(const Char_t* inFileName,
         if(TMath::Abs(trackMC->GetPt()) < 1.0 || TMath::Abs(trackMC->GetPt()) > 4.8)
           continue;
         hRapidityGen->Fill(trackMC->GetY());
+        hPseudoRapidityGen->Fill(trackMC->GetEta());
         hGenOmegaMB->Fill(trackMC->GetPt());
         if(HMevent)
           hGenOmegaHM->Fill(trackMC->GetPt());
@@ -193,6 +226,8 @@ void analyze_rapidity(const Char_t* inFileName,
         continue;
       // if(cascade->GetEtaCasc() > 0.8)
       //   continue;
+      hPseudoRapidityCascades->Fill(cascade->GetEtaCasc());
+      hRapidityCascades->Fill(CalcRapidityOmega(cascade));
 
       const Double_t dMassOmega     = cascade->GetIMO() - massOmega;
       const Double_t dMassXi = cascade->GetIMXi() - massXi;
@@ -232,6 +267,8 @@ void analyze_rapidity(const Char_t* inFileName,
       bPassedStandard = CheckCascStandardCuts(cascade);
       if(bPassedStandard){
         hCascStat->Fill("Standard", 1);
+        hRapidityCascadesStandard->Fill(CalcRapidityOmega(cascade));
+        hPseudoRapidityCascadesStandard->Fill(cascade->GetEtaCasc());
         Int_t bin = 1;
         if(cascade->GetCharge() < 0){bin = 0;}
           hOmegaInvMassVsPt[bin]->Fill(cascade->GetPtCasc(), dMassOmega, event->GetV0Mmultiplicity());

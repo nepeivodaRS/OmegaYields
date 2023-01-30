@@ -87,11 +87,14 @@ TH1I* hCascStat;
 
 TH1D* hVtxStatus;
 
-TH1D* hPseudoRapidityCascades;
+TH1D* hRapidityGen;
 TH1D* hPseudoRapidityGen;
 
 TH1D* hRapidityCascades;
-TH1D* hRapidityGen;
+TH1D* hPseudoRapidityCascades;
+
+TH1D* hRapidityCascadesStandard;
+TH1D* hPseudoRapidityCascadesStandard;
 
 TH1D* hNorm;
 
