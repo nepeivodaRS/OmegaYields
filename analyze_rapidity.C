@@ -1,4 +1,4 @@
-#include "analyze_tree.h"
+#include "analyze_rapidity.h"
 
 /*
   To run code:
@@ -6,9 +6,9 @@
 
   aliroot -l
 
-  .L analyze_tree.C+
+  .L analyze_rapidity.C+
 
-  analyze_tree("./outputTreesMC/mc_tree_all.dat", "./outputAnal/mc_anal_27_MCclosure.root", 0, 1)
+  analyze_rapidity("./outputTreesMC/mc_tree_all.dat", "./outputRapidity/mc_rapidity_30.root", 0, 1)
 */
 
 void InitHists(){
@@ -97,7 +97,7 @@ void WriteToFile(TFile* outFile){
   outFile->Close();
 }
 
-void analyze_tree(const Char_t* inFileName,
+void analyze_rapidity(const Char_t* inFileName,
 		const Char_t* outFileName,
 		const Int_t maxEvents = 0,
     Bool_t isMC = kFALSE)
