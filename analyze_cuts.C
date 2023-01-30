@@ -186,11 +186,11 @@ void InitHists(){
 
   for(Int_t i = 0; i < nSignalTypes; i++) {
     hOmegaInvMassVsPtCuts[i] = new TH3D(Form("hOmegaInvMassVsPtCuts_%s", SignalTypeName[i]), "M_{inv} vs p_{T}; p_{T}^{casc} [GeV/c]; M_{inv} - M_{#Omega} [GeV/c^{2}]; Centrality V0M",
-            nPtBinsMB, xBins, nMinvBins, minvBins, nCentrBins, xCentrBins);
+            nPtBinsMB, xBinsMB, nMinvBins, minvBins, nCentrBins, xCentrBins);
     hOmegaInvMassVsPtCuts[i]->Sumw2();
 
     hLambdaInvMassVsPtCuts[i] = new TH3D(Form("hLambdaInvMassVsPtCuts_%s", SignalTypeName[i]), "M_{inv} vs p_{T}; p_{T}^{V0} [GeV/c]; M_{inv} - M_{#Lambda} [GeV/c^{2}]; Centrality V0M",
-            nPtBinsMB, xBins, nMinvBins, minvBins, nCentrBins, xCentrBins);
+            nPtBinsMB, xBinsMB, nMinvBins, minvBins, nCentrBins, xCentrBins);
     hLambdaInvMassVsPtCuts[i]->Sumw2();
 
     CutList->Add(hOmegaInvMassVsPtCuts[i]);

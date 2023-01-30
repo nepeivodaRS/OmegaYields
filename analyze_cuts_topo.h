@@ -53,6 +53,7 @@ TList *ListFakeToAll;
 TList *ListRealToFakeStandard;
 TList *ListGenToRecTight;
 TList *ListRealToFakeTight;
+TList *ListFakeToAllTight;
 TLatex *uLatex;
 
 

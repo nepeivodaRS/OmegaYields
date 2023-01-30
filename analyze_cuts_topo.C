@@ -6,7 +6,7 @@
 
   aliroot -l
 
-  .L analyze_cuts_topo.C+
+  .L analyze_cuts_topo.C
 
   analyze_cuts_topo("./outputCuts/mc_cuts_27.root", "./outputCuts/mc_cuts_results_27.root")
 */
@@ -209,7 +209,7 @@ void CalcRatios(Int_t Sig1, Int_t Sig2, TList* InList, const Char_t* axisName, c
 void WriteToFile(TFile* outF){
   // Write to file
   outF->cd();
-  //outF->WriteObject(ListFakeToRecRatiosTight, "ListFakeToRecRatiosTight", "SingleKey");
+  outF->WriteObject(ListFakeToRecRatiosTight, "ListFakeToRecRatiosTight", "SingleKey");
   outF->WriteObject(ListRecToGenRatiosStandart, "ListRecToGenRatiosStandart", "SingleKey");
   outF->WriteObject(ListFakeToAll, "ListFakeToAll", "SingleKey");
   outF->WriteObject(ListRealToFakeStandard, "ListRealToFakeStandard", "SingleKey");
@@ -226,7 +226,7 @@ void analyze_cuts_topo(const Char_t* inFileName, const Char_t* outFileName){
 
   outFile = new TFile(outFileName, "RECREATE");
 
-  ListOfCutHists = (TList*)inFile->Get("CutList");
+  ListOfCutHists = (TList*)inFile->Get("ListOfCuts");
   for(Int_t i = 0; i < nSignalTypes; i++) {
     hCascPA[i] = (TH1D*)ListOfCutHists->FindObject(Form("hCascPA_%s", SignalTypeName[i]));
     hcascR[i] = (TH1D*)ListOfCutHists->FindObject(Form("hcascR_%s", SignalTypeName[i]));
@@ -249,8 +249,8 @@ void analyze_cuts_topo(const Char_t* inFileName, const Char_t* outFileName){
   uLatex->SetTextFont(60);
 
   // Ratio Hists
-  // ListFakeToRecRatiosTight = new TList();
-  // CalcRatios(10, 9, ListFakeToRecRatiosTight, "Fake_{tt}/Rec_{tt}", "FoR(tight)");
+  ListFakeToRecRatiosTight = new TList();
+  CalcRatios(10, 9, ListFakeToRecRatiosTight, "Fake_{tt}/Rec_{tt}", "FoR(tight)");
 
   // ListRecToGenRatiosStandart = new TList();
   // CalcRatios(6, 0, ListRecToGenRatiosStandart, "Rec_{sd}/Gen", "RoG(st)");
