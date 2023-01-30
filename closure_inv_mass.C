@@ -45,7 +45,7 @@ void createRatioPlotMC(TGraphErrors* graph1, TGraphErrors* graph2) {
     ratio->Draw("AP");
     ratio->SetMarkerStyle(20);
     ratio->GetXaxis()->SetTitle("Bin number");
-    ratio->GetYaxis()->SetTitle("FittedSignal/Real label");
+    ratio->GetYaxis()->SetTitle("Fit/Gen");
     // f->cd();
     // canvas3->Update();
     // canvas3->Write();

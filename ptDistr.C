@@ -4,7 +4,7 @@
 /*
   .L ptDistr.C
 
-  make_results("./outputAnal/mc_anal_27_MCclosureFixed.root", "./outputEff/mc_Eff_26.root", "./outputPtHists/PtHist_27.root", 1)
+  make_results("./outputAnal/mc_anal_27_MCclosureFixed.root", "./outputEff/mc_Eff_26.root", "./outputPtHists/PtHist_28.root", 1)
   
  */
 
@@ -211,8 +211,10 @@ void SignalExtractionPt(const Double_t *xPtBins, const Int_t nPtBins, TH3D *inHi
   // Setup for Gaussian mean graph
   double bins[7] = {1, 2, 3, 4, 5, 6, 7};
   double mean[7] = {0};
+  double sigma[7] = {0};
   double errBins[7] = {0};
   double errMean[7] = {0};
+  double errSigma[7] = {0};
   // Setup for Signal graph
   double signal[7] = {0};
   double errSignal[7] = {0};
@@ -260,6 +262,9 @@ void SignalExtractionPt(const Double_t *xPtBins, const Int_t nPtBins, TH3D *inHi
     // Points for Gaussian mean evolution graph
     mean[i] = par[4];
     errMean[i] = FitResult->ParError(4);
+    // Points for Gaussian sigma evolution graph
+    sigma[i] = par[5];
+    errSigma[i] = FitResult->ParError(5);
     // Points for signal graph
     signal[i] = par[3];
     errSignal[i] = FitResult->ParError(3);
@@ -340,6 +345,19 @@ void SignalExtractionPt(const Double_t *xPtBins, const Int_t nPtBins, TH3D *inHi
   c2->Update();
   gROOT->SetBatch(kFALSE);
   c2->Write();
+  // Plot the Gaussian sigma fit value evolution
+  gROOT->SetBatch(kTRUE);
+  TGraphErrors *SigmaGaussFit = new TGraphErrors(7, bins, sigma, errBins, errSigma);
+  SigmaGaussFit->SetTitle(Form("#sigma of the Gaussain fit for %s from %d to %d mult", inHist3D->GetName(), leftCentr, rightCentr));
+  SigmaGaussFit->GetXaxis()->SetTitle("Bin number");
+  SigmaGaussFit->GetYaxis()->SetTitle("#sigma");
+  SigmaGaussFit->SetMarkerStyle(20);
+  TCanvas *c4 = new TCanvas(Form("#sigma of the Gaussain fit for %s from %d to %d mult", inHist3D->GetName(), leftCentr, rightCentr),"PtHist",10,10,1200,900);
+  c4->cd();
+  SigmaGaussFit->Draw("AP");
+  c4->Update();
+  gROOT->SetBatch(kFALSE);
+  c4->Write();
   // Plot the signal evolution
   gROOT->SetBatch(kTRUE);
   TGraphErrors *NumberOfCascades = new TGraphErrors(7, bins, signal, errBins, errSignal);
