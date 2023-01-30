@@ -57,13 +57,13 @@ void InitHists(){
           100, -2, 2);
   hRapidityGen->Sumw2();
 
-  hRapidityCascades = new TH1D("hRapidityCascades", ";  p_{T} [GeV/c]",
-          100, -2, 2);
-  hRapidityCascades->Sumw2();
-
   hPseudoRapidityGen = new TH1D("hPseudoRapidityGen", ";  p_{T} [GeV/c]",
           100, -2, 2);
   hPseudoRapidityGen->Sumw2();
+
+  hRapidityCascades = new TH1D("hRapidityCascades", ";  p_{T} [GeV/c]",
+          100, -2, 2);
+  hRapidityCascades->Sumw2();
 
   hPseudoRapidityCascades = new TH1D("hPseudoRapidityCascades", ";  p_{T} [GeV/c]",
           100, -2, 2);
@@ -115,6 +115,12 @@ Double_t CalcRapidityOmega(AliAnalysisPIDCascade* cascade){
   Double_t energy = TMath::Sqrt(p*p + massOmega*massOmega);
   Double_t RapValue = 0.5*TMath::Log((energy + pz)/(energy - pz));
   return RapValue;
+}
+
+Double_t CalcRapidityOmegaMC(AliAnalysisPIDCascadeParticle* particle){
+ TLorentzVector lvParticle;
+ lvParticle.SetPtEtaPhiM(particle->GetPt(), particle->GetEta(), particle->GetPhi(), massOmega);
+ return lvParticle.Rapidity();
 }
 
 void WriteToFile(TFile* outFile){
@@ -200,7 +206,7 @@ void analyze_rapidity(const Char_t* inFileName,
         AliAnalysisPIDCascadeParticle* trackMC = (AliAnalysisPIDCascadeParticle*)generatedOmega->At(i);
         if(TMath::Abs(trackMC->GetPt()) < 1.0 || TMath::Abs(trackMC->GetPt()) > 4.8)
           continue;
-        hRapidityGen->Fill(trackMC->GetY());
+        hRapidityGen->Fill(CalcRapidityOmegaMC(trackMC));
         hPseudoRapidityGen->Fill(trackMC->GetEta());
         hGenOmegaMB->Fill(trackMC->GetPt());
         if(HMevent)
