@@ -1,7 +1,7 @@
 #include "closure_inv_mass.h"
 
 /*
-  .L closure_inv_mass.C+
+  .L closure_inv_mass.C
 
   closure_inv_mass("./outputPtHists/PtHist_27.root", "./outputClosure/SignalClosure_27", 1)
   
@@ -46,6 +46,9 @@ void createRatioPlotMC(TGraphErrors* graph1, TGraphErrors* graph2) {
     ratio->SetMarkerStyle(20);
     ratio->GetXaxis()->SetTitle("Bin number");
     ratio->GetYaxis()->SetTitle("FittedSignal/Real label");
+    // f->cd();
+    // canvas3->Update();
+    // canvas3->Write();
 }
 
 TCanvas* findCanvas(TDirectory* dir, const Char_t* axisName){
