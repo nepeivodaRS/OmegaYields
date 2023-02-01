@@ -96,6 +96,18 @@ TH1D* hPseudoRapidityCascades;
 TH1D* hRapidityCascadesStandard;
 TH1D* hPseudoRapidityCascadesStandard;
 
+TH1D* hRapidityKaon;
+TH1D* hPseudoRapidityKaon;
+
+TH1D* hRapidityPos;
+TH1D* hPseudoRapidityPos;
+
+TH1D* hRapidityNeg;
+TH1D* hPseudoRapidityNeg;
+
+TH1D* hRapidityAllComp;
+TH1D* hPseudoRapidityAllComp;
+
 TH1D* hNorm;
 
 TList *PtHistList;

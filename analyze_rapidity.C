@@ -53,29 +53,30 @@ void InitHists(){
 
   RapidityList = new TList();
 
-  hRapidityGen = new TH1D("hRapidityGen", ";  p_{T} [GeV/c]",
+  hRapidityGen = new TH1D("hRapidityGen", ";  y",
           100, -2, 2);
   hRapidityGen->Sumw2();
 
-  hPseudoRapidityGen = new TH1D("hPseudoRapidityGen", ";  p_{T} [GeV/c]",
+  hPseudoRapidityGen = new TH1D("hPseudoRapidityGen", ";  #eta",
           100, -2, 2);
   hPseudoRapidityGen->Sumw2();
 
-  hRapidityCascades = new TH1D("hRapidityCascades", ";  p_{T} [GeV/c]",
+  hRapidityCascades = new TH1D("hRapidityCascades", ";  y",
           100, -2, 2);
   hRapidityCascades->Sumw2();
 
-  hPseudoRapidityCascades = new TH1D("hPseudoRapidityCascades", ";  p_{T} [GeV/c]",
+  hPseudoRapidityCascades = new TH1D("hPseudoRapidityCascades", ";  #eta",
           100, -2, 2);
   hPseudoRapidityCascades->Sumw2();
 
-  hRapidityCascadesStandard = new TH1D("hRapidityCascadesStandard", ";  p_{T} [GeV/c]",
+  hRapidityCascadesStandard = new TH1D("hRapidityCascadesStandard", ";  y",
           100, -2, 2);
   hRapidityCascadesStandard->Sumw2();
 
-  hPseudoRapidityCascadesStandard = new TH1D("hPseudoRapidityCascadesStandard", ";  p_{T} [GeV/c]",
+  hPseudoRapidityCascadesStandard = new TH1D("hPseudoRapidityCascadesStandard", ";  #eta",
           100, -2, 2);
   hPseudoRapidityCascadesStandard->Sumw2();
+
 
   RapidityList->Add(hRapidityGen);
   RapidityList->Add(hPseudoRapidityGen);
@@ -83,6 +84,49 @@ void InitHists(){
   RapidityList->Add(hPseudoRapidityCascades);
   RapidityList->Add(hRapidityCascadesStandard);
   RapidityList->Add(hPseudoRapidityCascadesStandard);
+
+  // Products
+  hRapidityKaon = new TH1D("hRapidityKaon", ";  y",
+          100, -2, 2);
+  hRapidityKaon->Sumw2();
+
+  hPseudoRapidityKaon = new TH1D("hPseudoRapidityKaon", ";  #eta",
+          100, -2, 2);
+  hPseudoRapidityKaon->Sumw2();
+
+  hRapidityPos = new TH1D("hRapidityPos", ";  y",
+          100, -2, 2);
+  hRapidityPos->Sumw2();
+
+  hPseudoRapidityPos = new TH1D("hPseudoRapidityPos", ";  #eta",
+          100, -2, 2);
+  hPseudoRapidityPos->Sumw2();
+
+  hRapidityNeg = new TH1D("hRapidityNeg", ";  y",
+          100, -2, 2);
+  hRapidityNeg->Sumw2();
+
+  hPseudoRapidityNeg = new TH1D("hPseudoRapidityNeg", ";  #eta",
+          100, -2, 2);
+  hPseudoRapidityNeg->Sumw2();
+
+  hRapidityAllComp = new TH1D("hRapidityAllComp", ";  y",
+          100, -2, 2);
+  hRapidityAllComp->Sumw2();
+
+  hPseudoRapidityAllComp = new TH1D("hPseudoRapidityAllComp", ";  #eta",
+          100, -2, 2);
+  hPseudoRapidityAllComp->Sumw2();
+
+  RapidityList->Add(hRapidityKaon);
+  RapidityList->Add(hPseudoRapidityKaon);
+  RapidityList->Add(hRapidityPos);
+  RapidityList->Add(hPseudoRapidityPos);
+  RapidityList->Add(hRapidityNeg);
+  RapidityList->Add(hPseudoRapidityNeg);
+
+  RapidityList->Add(hRapidityAllComp);
+  RapidityList->Add(hPseudoRapidityAllComp);
 
   InvMassList = new TList();
 
@@ -136,8 +180,8 @@ void WriteToFile(TFile* outFile){
 }
 
 void analyze_rapidity(const Char_t* inFileName,
-		const Char_t* outFileName,
-		const Int_t maxEvents = 0,
+    const Char_t* outFileName,
+    const Int_t maxEvents = 0,
     Bool_t isMC = kFALSE)
 {
   // Open the input file and set up the classes.
@@ -234,6 +278,34 @@ void analyze_rapidity(const Char_t* inFileName,
       //   continue;
       hPseudoRapidityCascades->Fill(cascade->GetEtaCasc());
       hRapidityCascades->Fill(CalcRapidityOmega(cascade));
+
+      // Rapidity and Pseudorapidity of products
+      if(IsRealOmegaCascade(cascade)){
+        AliAnalysisPIDCascadeTrack* tr[3] = {cascade->GetBachAnalysisTrack(), 
+                                             cascade->GetV0()->GetPosAnalysisTrack(),
+                                             cascade->GetV0()->GetNegAnalysisTrack()};
+        if(cascade->GetCharge() < 0) {
+          AliAnalysisPIDCascadeTrack* dummy = tr[1];
+          tr[1] = tr[2];
+          tr[2] = dummy;
+        }
+        
+        hPseudoRapidityKaon->Fill(tr[0]->GetEta());
+        hPseudoRapidityPos->Fill(tr[1]->GetEta());
+        hPseudoRapidityNeg->Fill(tr[2]->GetEta());
+
+        hRapidityKaon->Fill(tr[0]->GetY(0.494)); // kaon
+        hRapidityPos->Fill(tr[1]->GetY(0.1396)); // pion
+        hRapidityNeg->Fill(tr[2]->GetY(0.9383)); // proton
+
+        hRapidityAllComp->Fill(tr[0]->GetY(0.494));
+        hRapidityAllComp->Fill(tr[1]->GetY(0.1396));
+        hRapidityAllComp->Fill(tr[2]->GetY(0.9383));
+
+        hPseudoRapidityAllComp->Fill(tr[0]->GetEta());
+        hPseudoRapidityAllComp->Fill(tr[1]->GetEta());
+        hPseudoRapidityAllComp->Fill(tr[2]->GetEta());
+      }
 
       const Double_t dMassOmega     = cascade->GetIMO() - massOmega;
       const Double_t dMassXi = cascade->GetIMXi() - massXi;
