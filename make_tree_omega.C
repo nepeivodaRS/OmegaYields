@@ -50,6 +50,9 @@
   make_tree_omega("./inputDatLists/mc_pp18n.dat", "./outputTreesMC/mc_tree_pp18n.root", 0, 1)
   make_tree_omega("./inputDatLists/mc_pp18o.dat", "./outputTreesMC/mc_tree_pp18o.root", 0, 1)
   make_tree_omega("./inputDatLists/mc_pp18p.dat", "./outputTreesMC/mc_tree_pp18p.root", 0, 1)
+
+
+  make_tree_omega("./inputDatLists/mc_pp17j_pp18i_omega.dat", "./outputTreesMC/mc_tree_pp17j_pp18i_omega.root", 0, 1)
   */
 
 void InitHists(){

@@ -5,6 +5,8 @@
   .L ptDistr.C
 
   make_results("./outputAnal/mc_anal_27_MCclosureFixed.root", "./outputEff/mc_Eff_26.root", "./outputPtHists/PtHist_28.root", 1)
+
+  make_results("./outputAnal/mc_anal_2feb_injected.root", "./outputEff/mc_Eff_2feb_injected.root", "./outputPtHists/PtHist_2feb_injected.root", 1)
   
  */
 
@@ -596,11 +598,11 @@ void make_results(const Char_t* fileNameData, const Char_t* fileNameEff, const C
     hRaw[i]->Divide(hEff[i]);
     // Apply rapidity correction
     hRaw[i]->Divide(fRap);
-    hRaw[i]->GetYaxis()->SetTitle("(#Omega^{-}+#bar{#Omega}^{+}):  d^{2}#it{N}/d#it{p}_{T}d#it{y} ((GeV/#it{c})^{-1})");
+    hRaw[i]->GetYaxis()->SetTitle("(#Omega^{-}+#bar{#Omega}^{+}):  d^{2}#it{N}/d#it{p}_{T} ((GeV/#it{c})^{-1})");
     if(isMC){
       NormalizeHistogram(hGen[i]);
       hGen[i]->Divide(fRap);
-      hGen[i]->GetYaxis()->SetTitle("(#Omega^{-}+#bar{#Omega}^{+}): d^{2}#it{N}/d#it{p}_{T}d#it{y} ((GeV/#it{c})^{-1})");
+      hGen[i]->GetYaxis()->SetTitle("(#Omega^{-}+#bar{#Omega}^{+}): d^{2}#it{N}/d#it{p}_{T} ((GeV/#it{c})^{-1})");
       CreateRatioPlot(hRaw[i], hGen[i], outFile);
     }
   }

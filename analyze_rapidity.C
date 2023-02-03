@@ -8,7 +8,7 @@
 
   .L analyze_rapidity.C+
 
-  analyze_rapidity("./outputTreesMC/mc_tree_all.dat", "./outputRapidity/mc_rapidity_30.root", 0, 1)
+  analyze_rapidity("./outputTreesMC/mc_tree_all.dat", "./outputRapidity/mc_rapidity_1.root", 0, 1)
 */
 
 void InitHists(){
@@ -289,7 +289,7 @@ void analyze_rapidity(const Char_t* inFileName,
           tr[1] = tr[2];
           tr[2] = dummy;
         }
-        
+
         hPseudoRapidityKaon->Fill(tr[0]->GetEta());
         hPseudoRapidityPos->Fill(tr[1]->GetEta());
         hPseudoRapidityNeg->Fill(tr[2]->GetEta());
