@@ -8,7 +8,7 @@
 
   .L analyze_rapidity.C+
 
-  analyze_rapidity("./outputTreesMC/mc_tree_all.dat", "./outputRapidity/mc_rapidity_1.root", 0, 1)
+  analyze_rapidity("./outputTreesMC/mc_tree_all.dat", "./outputRapidity/mc_rapidity_3feb.root", 0, 1)
 */
 
 void InitHists(){
@@ -77,6 +77,13 @@ void InitHists(){
           100, -2, 2);
   hPseudoRapidityCascadesStandard->Sumw2();
 
+  hPseudoRapidityCascadesGen = new TH1D("hPseudoRapidityCascadesGen", ";  #eta",
+          100, -2, 2);
+  hPseudoRapidityCascadesGen->Sumw2();
+
+  hRapidityCascadesGen = new TH1D("hRapidityCascadesGen", ";  y",
+          100, -2, 2);
+  hRapidityCascadesGen->Sumw2();
 
   RapidityList->Add(hRapidityGen);
   RapidityList->Add(hPseudoRapidityGen);
@@ -84,6 +91,8 @@ void InitHists(){
   RapidityList->Add(hPseudoRapidityCascades);
   RapidityList->Add(hRapidityCascadesStandard);
   RapidityList->Add(hPseudoRapidityCascadesStandard);
+  RapidityList->Add(hRapidityCascadesGen);
+  RapidityList->Add(hPseudoRapidityCascadesGen);
 
   // Products
   hRapidityKaon = new TH1D("hRapidityKaon", ";  y",
@@ -289,6 +298,9 @@ void analyze_rapidity(const Char_t* inFileName,
           tr[1] = tr[2];
           tr[2] = dummy;
         }
+
+        hPseudoRapidityCascadesGen->Fill(cascade->GetEtaCasc());
+        hRapidityCascadesGen->Fill(CalcRapidityOmega(cascade));
 
         hPseudoRapidityKaon->Fill(tr[0]->GetEta());
         hPseudoRapidityPos->Fill(tr[1]->GetEta());

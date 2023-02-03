@@ -3,7 +3,7 @@
 /*
   .L closure_inv_mass.C
 
-  closure_inv_mass("./outputPtHists/PtHist_27.root", "./outputClosure/SignalClosure_27", 1)
+  closure_inv_mass("./outputPtHists/PtHist_2feb_injected.root", "./outputClosure/SignalClosure_3feb", 1)
   
  */
 TFile* FindFileFresh(const Char_t* fileName)

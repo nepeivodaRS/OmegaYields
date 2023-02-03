@@ -93,6 +93,9 @@ TH1D* hPseudoRapidityGen;
 TH1D* hRapidityCascades;
 TH1D* hPseudoRapidityCascades;
 
+TH1D* hRapidityCascadesGen;
+TH1D* hPseudoRapidityCascadesGen;
+
 TH1D* hRapidityCascadesStandard;
 TH1D* hPseudoRapidityCascadesStandard;
 
