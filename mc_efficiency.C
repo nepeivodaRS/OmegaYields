@@ -9,6 +9,8 @@
 
   mc_efficiency("./outputTreesMC/mc_tree_all.dat", "./outputEff/mc_Eff_26.root", 0)
 
+  mc_efficiency("./outputTreesMC/mc_tree_pp17j_pp18i_omega.root", "./outputEff/mc_Eff_2feb_injected.root", 0)
+
 */
 
 void InitHists(){ 
