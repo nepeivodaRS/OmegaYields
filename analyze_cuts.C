@@ -197,7 +197,7 @@ void InitHists(){
     CutList->Add(hLambdaInvMassVsPtCuts[i]);
   }
 
-  hV0PVvsDCAbach = new TH2D("hV0PVvsDCApn", "DCA_{V0PV}; DCA_{Bach}", 50, 0, 5, 30, 0, 2);
+  hV0PVvsDCAbach = new TH2D("hV0PVvsDCAbach", "DCA_{V0PV}; DCA_{Bach}", 50, 0, 5, 30, 0, 2);
   hV0PVvsDCAbach->Sumw2();
   CutList->Add(hV0PVvsDCAbach);
 
@@ -353,7 +353,7 @@ void analyze_cuts(const Char_t* inFileName,
           AliAnalysisPIDCascadeV0* v0 = cascade->GetV0();
           AliAnalysisPIDCascadeTrack* bachelor = cascade->GetBachAnalysisTrack();
           const Double_t bachDCA = GetAbsImpactParameterXY(bachelor);
-          hV0BachVsDCApn->Fill(v0->GetDCAPV(), bachDCA);
+          hV0PVvsDCAbach->Fill(v0->GetDCAPV(), bachDCA);
         }
         else{
           FillCutHists(1, cascade, event);
