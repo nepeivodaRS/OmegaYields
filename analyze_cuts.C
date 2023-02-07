@@ -8,7 +8,7 @@
 
   .L analyze_cuts.C+
 
-  analyze_cuts("./outputTreesMC/mc_tree_all.dat", "./outputCuts/mc_cuts_27.root", 0, 1)
+  analyze_cuts("./outputTreesMC/mc_tree_all.dat", "./outputCuts/mc_cuts_7feb.root", 0, 1)
 */
 void FillCutHists(Int_t SigType, AliAnalysisPIDCascade* cascade, AliAnalysisPIDCascadeEvent* event){
   // Fill CutList hists with signals of specific type
@@ -350,6 +350,7 @@ void analyze_cuts(const Char_t* inFileName,
         bIsRealOmegaCascade = IsRealOmegaCascade(cascade);
         if(bIsRealOmegaCascade){
           FillCutHists(0, cascade, event);
+          AliAnalysisPIDCascadeV0* v0 = cascade->GetV0();
           hV0BachVsDCApn->Fill(cascade->GetCascDCA(), v0->GetDCAV0Daughters());
         }
         else{
