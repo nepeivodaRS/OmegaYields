@@ -3,7 +3,7 @@
 /*
   .L closure_inv_mass.C
 
-  closure_inv_mass("./outputPtHists/PtHist_2feb_injected.root", "./outputClosure/SignalClosure_3feb", 1)
+  closure_inv_mass("./outputPtHists/PtHist_3feb.root", "./outputClosure/SignalClosure_3feb", 1)
   
  */
 TFile* FindFileFresh(const Char_t* fileName)
@@ -51,7 +51,7 @@ void createRatioPlotMC(TGraphErrors* graph1, TGraphErrors* graph2) {
     // canvas3->Write();
 }
 
-TCanvas* findCanvas(TDirectory* dir, const Char_t* axisName){
+TCanvas* findCanvas(TDirectory* dir, const Char_t* canvasName){
   TKey* key;
   TCanvas *canvasReturn;
   TIter nextkey(dir->GetListOfKeys());
@@ -64,7 +64,7 @@ TCanvas* findCanvas(TDirectory* dir, const Char_t* axisName){
     if (obj->InheritsFrom("TCanvas")){
       TCanvas * can = (TCanvas*)obj;
       //std::cout << can->GetName() << std::endl;
-      if(strcmp(can->GetName(), axisName) == 0){
+      if(strcmp(can->GetName(), canvasName) == 0){
         canvasReturn = can;
       }
     }

@@ -197,6 +197,10 @@ void InitHists(){
     CutList->Add(hLambdaInvMassVsPtCuts[i]);
   }
 
+  hV0BachVsDCApn = new TH2D("hV0BachVsDCApn", "DCA_{V0Bach}; DCA_{V0Daughters}", 30, 0, 15, 30, 0, 3);
+  hV0BachVsDCApn->Sumw2();
+  CutList->Add(hV0BachVsDCApn);
+
   hEventStat = new TH1I("hEventStat","",3,0,3);
 
   hCascStat = new TH1I("hCascStat","",9,0,9);
@@ -340,11 +344,13 @@ void analyze_cuts(const Char_t* inFileName,
 
       hCascStat->Fill("Fast signal", 1);
 
+
       FillCutHists(2, cascade, event);
       if(isMC){
         bIsRealOmegaCascade = IsRealOmegaCascade(cascade);
         if(bIsRealOmegaCascade){
           FillCutHists(0, cascade, event);
+          hV0BachVsDCApn->Fill(cascade->GetCascDCA(), v0->GetDCAV0Daughters());
         }
         else{
           FillCutHists(1, cascade, event);

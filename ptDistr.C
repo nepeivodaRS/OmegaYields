@@ -214,9 +214,11 @@ void SignalExtractionPt(const Double_t *xPtBins, const Int_t nPtBins, TH3D *inHi
   double bins[7] = {1, 2, 3, 4, 5, 6, 7};
   double mean[7] = {0};
   double sigma[7] = {0};
+  double chisq[7] = {0};
   double errBins[7] = {0};
   double errMean[7] = {0};
   double errSigma[7] = {0};
+  double errChisq[7] = {0};
   // Setup for Signal graph
   double signal[7] = {0};
   double errSignal[7] = {0};
@@ -235,6 +237,7 @@ void SignalExtractionPt(const Double_t *xPtBins, const Int_t nPtBins, TH3D *inHi
     TH1D* hProfileInvMassX = hProfileInvMassZ->ProjectionX("_px", hProfileInvMassZ->GetYaxis()->FindBin(xPtBins[i] + 0.00001), hProfileInvMassZ->GetYaxis()->FindBin(xPtBins[i+1]-0.00001));
     hProfileInvMassX->SetTitle(Form("M_{inv} in pt bins fit, %d bin",  i+1));
     hProfileInvMassX->SetXTitle("#it{M}_{inv} - #it{M}_{#Omega^{-} (#bar{#Omega}^{+})} [GeV/#it{c}^{2}]");
+    hProfileInvMassX->SetYTitle("Counts");
     TF1 *fitFcn = new TF1("fitFcn",fitFunctionG,-0.03, 0.03,6);
     Double_t sigPickApprox = 20; // 0 guess for the first fit
     fitFcn->SetParameters(1,1,1,sigPickApprox,0,0.001);
@@ -270,6 +273,8 @@ void SignalExtractionPt(const Double_t *xPtBins, const Int_t nPtBins, TH3D *inHi
     // Points for signal graph
     signal[i] = par[3];
     errSignal[i] = FitResult->ParError(3);
+    // Points for chi square graph
+    chisq[i] = fitFcnRedefined->GetChisquare()/fitFcnRedefined->GetNDF();
     // Addition of fitted signal and background curves to our canvas
     TF1 *backFcn = new TF1("backFcn",background,-0.03,0.03,3);
     TF1 *signalFcn = new TF1("signalFcn",GAUSSredifined,-0.03,0.03,3);
@@ -373,6 +378,19 @@ void SignalExtractionPt(const Double_t *xPtBins, const Int_t nPtBins, TH3D *inHi
   c3->Update();
   gROOT->SetBatch(kFALSE);
   c3->Write();
+  // Plot the chi square evolution
+  gROOT->SetBatch(kTRUE);
+  TGraphErrors *gChiSquare = new TGraphErrors(7, bins, chisq, errBins, errChisq);
+  gChiSquare->SetTitle(Form("Chi_sqaure_for_%s_from_%d_to_%d_mult", inHist3D->GetName(), leftCentr, rightCentr));
+  gChiSquare->GetXaxis()->SetTitle("Bin number");
+  gChiSquare->GetYaxis()->SetTitle("#chi^{2}/ndf");
+  gChiSquare->SetMarkerStyle(20);
+  TCanvas *c5 = new TCanvas(Form("Chi_sqaure_for_%s_from_%d_to_%d_mult", inHist3D->GetName(), leftCentr, rightCentr),"PtHist",10,10,1200,900);
+  c5->cd();
+  gChiSquare->Draw("AP");
+  c5->Update();
+  gROOT->SetBatch(kFALSE);
+  c5->Write();
   // Go back to default dir in output file
   dir->cd("/");
 }
@@ -598,11 +616,11 @@ void make_results(const Char_t* fileNameData, const Char_t* fileNameEff, const C
     hRaw[i]->Divide(hEff[i]);
     // Apply rapidity correction
     hRaw[i]->Divide(fRap);
-    hRaw[i]->GetYaxis()->SetTitle("(#Omega^{-}+#bar{#Omega}^{+}):  d^{2}#it{N}/d#it{p}_{T} ((GeV/#it{c})^{-1})");
+    hRaw[i]->GetYaxis()->SetTitle("(#Omega^{-}+#bar{#Omega}^{+}):  1/#it{N}_{inel}d^{2}#it{N}/d#it{p}_{T}d#it{y} ((GeV/#it{c})^{-1})");
     if(isMC){
       NormalizeHistogram(hGen[i]);
       hGen[i]->Divide(fRap);
-      hGen[i]->GetYaxis()->SetTitle("(#Omega^{-}+#bar{#Omega}^{+}): d^{2}#it{N}/d#it{p}_{T} ((GeV/#it{c})^{-1})");
+      hGen[i]->GetYaxis()->SetTitle("(#Omega^{-}+#bar{#Omega}^{+}): 1/#it{N}_{inel}d^{2}#it{N}/d#it{p}_{T}d#it{y} ((GeV/#it{c})^{-1})");
       CreateRatioPlot(hRaw[i], hGen[i], outFile);
     }
   }

@@ -44,6 +44,8 @@ const Char_t *SignalTypeName[nSignalTypes] = {"Generated", "BackgroundAllCasc", 
 TH3D *hOmegaInvMassVsPtCuts[nSignalTypes] = { 0 };
 TH3D *hLambdaInvMassVsPtCuts[nSignalTypes] = { 0 };
 
+TH2D *hV0BachVsDCApn;
+
 // Bach cuts
 TH1D *hBachDCA[nSignalTypes] = { 0 };
 
