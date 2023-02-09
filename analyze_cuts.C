@@ -197,7 +197,7 @@ void InitHists(){
     CutList->Add(hLambdaInvMassVsPtCuts[i]);
   }
 
-  hV0PVvsDCAbach = new TH2D("hV0PVvsDCAbach", "DCA_{V0PV}; DCA_{Bach}", 50, 0, 5, 30, 0, 2);
+  hV0PVvsDCAbach = new TH2D("hV0PVvsDCAbach", "2D_cut_anal; DCA_{V0PV}; DCA_{Bach}", 50, 0, 5, 30, 0, 2);
   hV0PVvsDCAbach->Sumw2();
   CutList->Add(hV0PVvsDCAbach);
 
