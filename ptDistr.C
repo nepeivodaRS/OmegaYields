@@ -4,7 +4,8 @@
 /*
   .L ptDistr.C
 
-  make_results("./outputAnal/mc_anal_27_MCclosureFixed.root", "./outputEff/mc_Eff_26.root", "./outputPtHists/PtHist_3feb.root", 1)
+  make_results("./outputAnal/data_10Feb.root", "./outputEff/mc_Eff_26.root", "./outputPtHists/PtHist_10feb_data.root", 0)
+  make_results("./outputAnal/data_10Feb.root", "./outputEff/mc_Eff_2feb_injected.root", "./outputPtHists/PtHist_10feb_data.root", 0)
 
   make_results("./outputAnal/mc_anal_2feb_injected.root", "./outputEff/mc_Eff_2feb_injected.root", "./outputPtHists/PtHist_2feb_injected.root", 1)
   
@@ -238,26 +239,48 @@ void SignalExtractionPt(const Double_t *xPtBins, const Int_t nPtBins, TH3D *inHi
     hProfileInvMassX->SetTitle(Form("M_{inv} in pt bins fit, %d bin",  i+1));
     hProfileInvMassX->SetXTitle("#it{M}_{inv} - #it{M}_{#Omega^{-} (#bar{#Omega}^{+})} [GeV/#it{c}^{2}]");
     hProfileInvMassX->SetYTitle("Counts");
+    // BG fitting
+    TCanvas *cBG = new TCanvas(Form("InvMassFit_bin_%d_from_%d_to_%d_centr_BG", i+1, leftCentr, rightCentr),"PtHistBG",10,10,1200,900);
+    cBG->cd();
+    Double_t sigPickApprox = hProfileInvMassX->GetBinContent(hProfileInvMassX->GetMaximumBin()); // 0 guess for the first fit
+    TH1D* hProfileInvMassBG = (TH1D*)hProfileInvMassX->Clone();
+    Int_t StartBin = hProfileInvMassBG->FindBin(-0.01);
+    Int_t EndBin = hProfileInvMassBG->FindBin(0.01);
+    for(Int_t i = StartBin; i <= EndBin; i++) { hProfileInvMassBG->SetBinContent(i, 0); hProfileInvMassBG->SetBinError(i, NULL);}
+    TF1 *fitFcnBG = new TF1("fitFcnBG",background,-0.03, 0.03,3);
+    fitFcnBG->SetParameters(1,1,1);
+    TFitResultPtr FitBG = hProfileInvMassBG->Fit(fitFcnBG, "SQRW");
+    gROOT->SetBatch(kFALSE);
+    gPad->Update();
+    cBG->Update();
+    cBG->Write();
+    gROOT->SetBatch(kTRUE);
+    Double_t parBG[3];
+    fitFcnBG->GetParameters(parBG);
+    // Use BG fitting as an initall guess for the whole 1 stage fitting
     TF1 *fitFcn = new TF1("fitFcn",fitFunctionG,-0.03, 0.03,6);
-    Double_t sigPickApprox = 20; // 0 guess for the first fit
-    fitFcn->SetParameters(1,1,1,sigPickApprox,0,0.001);
-    // fitFcn->SetNpx(1e5);
-    // fitFcn->SetLineColor(kRed+1);
+    fitFcn->SetParameters(parBG[0],parBG[1],parBG[2],sigPickApprox,0,0.0015);
+    fitFcn->FixParameter(0,parBG[0]);
+    fitFcn->FixParameter(1,parBG[1]);
+    fitFcn->FixParameter(2,parBG[2]);
     TH1D* hProfileInvMassXFirstFit = (TH1D*)hProfileInvMassX->Clone();
-    hProfileInvMassXFirstFit->Fit("fitFcn","eRL");
+    hProfileInvMassXFirstFit->Fit("fitFcn","WRL");
     Double_t par[6];
     fitFcn->GetParameters(par);
     par[5] = TMath::Abs(par[5]); // sometimes sigma is negative
     par[3] = par[3]*par[5]*TMath::Power(TMath::TwoPi(), 0.5)/(0.06/nMinvBins); // from initial guess of A to S
-    // Make a fit once again with initial guess based on the previous fit
+    // Make a fit once again with initial guess based on the previous fit (Stage 2)
     TF1 *fitFcnRedefined = new TF1("fitFcn2",fitFunctionRedifined,-0.03, 0.03,6);
     fitFcnRedefined->SetParameters(par);
+    fitFcnRedefined->FixParameter(0,parBG[0]);
+    fitFcnRedefined->FixParameter(1,parBG[1]);
+    fitFcnRedefined->FixParameter(2,parBG[2]);
     fitFcnRedefined->SetNpx(1e5);
     fitFcnRedefined->SetLineColor(kRed+1);
     // Create canvas for fitted inv mass
     TCanvas *c1 = new TCanvas(Form("InvMassFit_bin_%d_from_%d_to_%d_centr", i+1, leftCentr, rightCentr),"PtHist",10,10,1200,900);
     c1->cd();
-    TFitResultPtr FitResult = hProfileInvMassX->Fit("fitFcn2","eRSL");
+    TFitResultPtr FitResult = hProfileInvMassX->Fit("fitFcn2","WRSL");
     fitFcnRedefined->GetParameters(par);
     // Fill histogram with fitted signal: integral divided by the bin width. And eval the error of each bin
     Double_t FillValue = par[3];
@@ -421,6 +444,7 @@ void SignalMC(const Double_t *xPtBins, const Int_t nPtBins, TH3D *inHist3D, Int_
 
     TCanvas *c1 = new TCanvas(Form("InvMass_bin_%d_from_%d_to_%d", i+1, leftCentr, rightCentr),"PtHist",10,10,1200,900);
     c1->cd();
+
     // Points for signal graph
     signal[i] = hProfileInvMassX->GetEntries();
     errSignal[i] = 0;
