@@ -18,8 +18,12 @@ void InitHists(){
     minvBins[i] = -0.03 + i * 0.06/nMinvBins;
   }
 
+  for(Int_t i = 0; i <= nPtBinsEff; i++) {
+    xBinsEff[i] = 1.00 + i * 3.80/nPtBinsEff;
+  }
+
   hGenOmegaMB = new TH1D("hGenOmegaMB", ";  p_{T} [GeV/c]",
-        nPtBinsMB, xBinsMB);
+        nPtBinsEff, xBinsEff);
   hGenOmegaMB->Sumw2();
 
   hGenOmegaHM = new TH1D("hGenOmegaHM", ";  p_{T} [GeV/c]",
@@ -31,7 +35,7 @@ void InitHists(){
   hGenOmegaVHM->Sumw2();
 
   hRecOmegaMBSd = new TH1D("hRecOmegaMBSd", ";  p_{T} [GeV/c]",
-        nPtBinsMB, xBinsMB);
+        nPtBinsEff, xBinsEff);
   hRecOmegaMBSd->Sumw2();
   
   hRecOmegaHMSd = new TH1D("hRecOmegaHMSd", ";  p_{T} [GeV/c]",
@@ -43,7 +47,7 @@ void InitHists(){
   hRecOmegaVHMSd->Sumw2();
   
   hEffOmegaMB = new TH1D("hEffOmegaMB", ";  p_{T} [GeV/c]",
-        nPtBinsMB, xBinsMB);
+        nPtBinsEff, xBinsEff);
   hEffOmegaMB->Sumw2();
   
   hEffOmegaHM = new TH1D("hEffOmegaHM", ";  p_{T} [GeV/c]",

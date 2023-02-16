@@ -38,6 +38,9 @@ const Int_t nPtBinsMB = 7;
 Double_t xBinsMB[nPtBinsMB+1] = 
   {1.00, 1.40, 1.80, 2.30, 2.80, 3.30, 3.80, 4.80};
 
+const Int_t nPtBinsEff = 40;
+Double_t xBinsEff[nPtBinsEff+1] = { 0 };
+
 // Bins for HM analysis
 
 // const Int_t nPtBinsHM = 13;

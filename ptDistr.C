@@ -244,9 +244,9 @@ void SignalExtractionPt(const Double_t *xPtBins, const Int_t nPtBins, TH3D *inHi
     cBG->cd();
     Double_t sigPickApprox = hProfileInvMassX->GetBinContent(hProfileInvMassX->GetMaximumBin()); // 0 guess for the first fit
     TH1D* hProfileInvMassBG = (TH1D*)hProfileInvMassX->Clone();
-    Int_t StartBin = hProfileInvMassBG->FindBin(-0.01);
-    Int_t EndBin = hProfileInvMassBG->FindBin(0.01);
-    for(Int_t i = StartBin; i <= EndBin; i++) { hProfileInvMassBG->SetBinContent(i, 0); hProfileInvMassBG->SetBinError(i, NULL);}
+    Int_t leftSideBin = hProfileInvMassBG->FindBin(-0.01);
+    Int_t rightSideBin = hProfileInvMassBG->FindBin(0.01);
+    for(Int_t i = leftSideBin; i <= rightSideBin; i++) { hProfileInvMassBG->SetBinContent(i, 0); hProfileInvMassBG->SetBinError(i, NULL);}
     TF1 *fitFcnBG = new TF1("fitFcnBG",background,-0.03, 0.03,3);
     fitFcnBG->SetParameters(1,1,1);
     TFitResultPtr FitBG = hProfileInvMassBG->Fit(fitFcnBG, "SQRW");
@@ -269,7 +269,7 @@ void SignalExtractionPt(const Double_t *xPtBins, const Int_t nPtBins, TH3D *inHi
     fitFcn->GetParameters(par);
     par[5] = TMath::Abs(par[5]); // sometimes sigma is negative
     par[3] = par[3]*par[5]*TMath::Power(TMath::TwoPi(), 0.5)/(0.06/nMinvBins); // from initial guess of A to S
-    // Make a fit once again with initial guess based on the previous fit (Stage 2)
+    // Make fit once again with initial guess based on the previous fit (Stage 2)
     TF1 *fitFcnRedefined = new TF1("fitFcn2",fitFunctionRedifined,-0.03, 0.03,6);
     fitFcnRedefined->SetParameters(par);
     fitFcnRedefined->FixParameter(0,parBG[0]);
