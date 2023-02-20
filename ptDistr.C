@@ -4,10 +4,11 @@
 /*
   .L ptDistr.C
 
-  make_results("./outputAnal/data_10Feb.root", "./outputEff/mc_Eff_26.root", "./outputPtHists/PtHist_10feb_data.root", 0)
+  make_results("./outputAnal/data_10Feb.root", "./outputEff/mc_Eff_26.root", "./outputPtHists/PtHist_16feb_data.root", 0)
   make_results("./outputAnal/data_10Feb.root", "./outputEff/mc_Eff_2feb_injected.root", "./outputPtHists/PtHist_10feb_data.root", 0)
 
   make_results("./outputAnal/mc_anal_2feb_injected.root", "./outputEff/mc_Eff_2feb_injected.root", "./outputPtHists/PtHist_2feb_injected.root", 1)
+  make_results("./outputAnal/mc_anal_27_MCclosureFixed.root", "./outputEff/mc_Eff_2feb_injected.root", "./outputPtHists/PtHist_2feb_injected_sb_mc.root", 1)
   
  */
 
@@ -114,14 +115,16 @@ void CreateRatioPlot(TH1D *h1In,TH1D *h2In, TFile* outFile){
   pad1->Draw();             // Draw the upper pad: pad1
   pad1->cd();               // pad1 becomes the current pad
   h1->SetStats(0);          // No statistics on upper plot
-  h1->Draw();               // Draw h1
-  h2->Draw("same");         // Draw h2 on top of h1
+  h2->SetStats(0);          // No statistics on upper plot
 
   TAxis *axis = h1->GetYaxis();
   //axis->ChangeLabel(1, -1, -1, -1, -1, -1, " ");
   axis->SetLabelFont(43); // Absolute font size in pixel (precision 3)
   axis->SetLabelSize(19);
   axis->SetRange(0, MaxHeightHist);
+
+  h2->Draw();         // Draw h2
+  h1->Draw("same");               //  Draw h1 on top of h2
 
   TLegend*  lLegend     = new TLegend(0.60,0.658,0.782,0.759);
   lLegend->SetTextFont(42);
@@ -205,6 +208,155 @@ void CreateRatioPlot(TH1D *h1In,TH1D *h2In, TFile* outFile){
   canvas->Write();
   gROOT->SetBatch(kFALSE);
   dir->cd("/");
+}
+
+void SignalExtractionPtSideBand(const Double_t *xPtBins, const Int_t nPtBins, TH3D *inHist3D, Int_t leftCentr, Int_t rightCentr, TH1D* inHist, TFile* outFile){
+  // Set stat box to show only mean and number of entries
+  gStyle->SetOptStat("me");
+  gStyle->SetOptFit(1);
+  double bins[7] = {1, 2, 3, 4, 5, 6, 7};
+  double errBins[7] = {0};
+  // Setup for Signal graph
+  double signalArr[7] = {0};
+  double errSignal[7] = {0};
+
+  // Create dir to store all the fitted hists in centrality region from 'leftCentr' to 'rightCentr' bin
+  TDirectory* dir = outFile->mkdir(Form("SideBandPtFitHists_%s_from_%d_to_%d_centr", inHist3D->GetName(), leftCentr, rightCentr));
+  dir->cd();
+  // Clone hist not to change the original one
+  TH3D* invMassHist = (TH3D*)inHist3D->Clone();
+  invMassHist->GetZaxis()->SetRange(leftCentr, rightCentr);
+  invMassHist->Write();
+  TH2D* hProfileInvMassZ = static_cast<TH2D*>(invMassHist->Project3D("xy")); // doesn't work w/o static cast; projects in range that was set above
+  hProfileInvMassZ->Write();
+  // Loop over all PtBins and fit inv mass spectra
+  for(Int_t i = 0; i < nPtBins; ++i) {
+    gROOT->SetBatch(kTRUE);
+    TH1D* hProfileInvMassX = hProfileInvMassZ->ProjectionX("_px", hProfileInvMassZ->GetYaxis()->FindBin(xPtBins[i] + 0.00001), hProfileInvMassZ->GetYaxis()->FindBin(xPtBins[i+1]-0.00001));
+    hProfileInvMassX->SetTitle(Form("M_{inv} in pt bins fit, %d bin",  i+1));
+    hProfileInvMassX->SetXTitle("#it{M}_{inv} - #it{M}_{#Omega^{-} (#bar{#Omega}^{+})} [GeV/#it{c}^{2}]");
+    hProfileInvMassX->SetYTitle("Counts");
+    // SideBand specific method
+    TCanvas *cSideBand = new TCanvas(Form("InvMassFit_bin_%d_from_%d_to_%d_centr", i+1, leftCentr, rightCentr),"PtHistSideBand",10,10,1200,900);
+    cSideBand->cd();
+    hProfileInvMassX->Draw();
+
+    Double_t leftBg = -0.02;
+    Double_t leftSig = -0.01;
+    Double_t rightBg = 0.02;
+    Double_t rightSig = 0.01;
+
+    Int_t leftSideSigBin = hProfileInvMassX->FindBin(leftSig);
+    Int_t rightSideSigBin = hProfileInvMassX->FindBin(rightSig);
+    Int_t rightSideBGBin = hProfileInvMassX->FindBin(rightBg);
+    Int_t leftSideBGBin = hProfileInvMassX->FindBin(leftBg);
+
+    Double_t sigPickApprox = hProfileInvMassX->GetBinContent(hProfileInvMassX->GetMaximumBin()); // 0 guess for the first fit
+
+    const Int_t n = 2;
+    Double_t xL[n], yL[n];
+    Double_t xR[n], yR[n];
+    Double_t xLBg[n], yLBg[n];
+    Double_t xRBg[n], yRBg[n];
+
+    xLBg[0] = xLBg[1] = leftBg;
+    xRBg[0] = xRBg[1] = rightBg;
+    xL[0] = xL[1] = leftSig;
+    xR[0] = xR[1] = rightSig;
+    yL[0] = yR[0] = yRBg[0] = yLBg[0] = 0;
+    yL[1] = yR[1] = yRBg[1] = yLBg[1] = sigPickApprox/2.;
+
+    auto grLsig = new TGraph(n,xL,yL);
+    grLsig->SetLineColor(2);
+    grLsig->SetLineWidth(3);
+    grLsig->SetLineStyle(2);
+    grLsig->Draw("SAME");
+
+    auto grRsig = new TGraph(n,xR,yR);
+    grRsig->SetLineColor(2);
+    grRsig->SetLineWidth(3);
+    grRsig->SetLineStyle(2);
+    grRsig->Draw("SAME");
+
+    auto grRbg = new TGraph(n,xRBg,yRBg);
+    grRbg->SetLineColor(3);
+    grRbg->SetLineWidth(3);
+    grRbg->SetLineStyle(2);
+    grRbg->Draw("SAME");
+
+    auto grLbg = new TGraph(n,xLBg,yLBg);
+    grLbg->SetLineColor(3);
+    grLbg->SetLineWidth(3);
+    grLbg->SetLineStyle(2);
+    grLbg->Draw("SAME");
+
+    Double_t signal = hProfileInvMassX->Integral(leftSideSigBin, rightSideSigBin) - (rightSig - leftSig)/((leftSig - leftBg) + (rightBg - rightSig))*(hProfileInvMassX->Integral(leftSideBGBin, leftSideSigBin) + hProfileInvMassX->Integral(rightSideSigBin, rightSideBGBin)); 
+    std::cout << "bin number: " << i+1 << " signal value: " << signal << std::endl;
+    inHist->Fill((xPtBins[i] + xPtBins[i+1])/2., signal);
+    inHist->SetBinError(i+1, TMath::Power(hProfileInvMassX->Integral(leftSideSigBin, rightSideSigBin) + hProfileInvMassX->Integral(leftSideBGBin, leftSideSigBin) + hProfileInvMassX->Integral(rightSideSigBin, rightSideBGBin), 0.5)); // Error???
+
+    signalArr[i] = signal;
+    errSignal[i] = TMath::Power(hProfileInvMassX->Integral(leftSideSigBin, rightSideSigBin) + hProfileInvMassX->Integral(leftSideBGBin, leftSideSigBin) + hProfileInvMassX->Integral(rightSideSigBin, rightSideBGBin), 0.5);
+    // Settings of Legend
+    TLegend *legend=new TLegend(0.6,0.65,0.88,0.85);
+    legend->SetTextFont(42);
+    legend->SetTextSize(0.03);
+    legend->SetLineColorAlpha(0.,0.);
+    legend->SetFillColorAlpha(0.,0.);
+    legend->SetBorderSize(0.);
+    legend->AddEntry(hProfileInvMassX,"Data (stat uncert.)","lpe");
+    legend->Draw("same");
+
+    // Settings of latex label of pt range
+    TLatex ptRange;
+    ptRange.SetTextSize(0.03);
+    ptRange.SetTextFont(42);
+    ptRange.SetNDC();
+    ptRange.DrawLatex(0.155, 0.814, Form("%.2f GeV/#it{c} < #it{p}_{T} < %.2f GeV/#it{c}", xPtBins[i], xPtBins[i+1]));
+
+    // Settings of latex label of SqrtSnn
+    TLatex sqrtSnn;
+    sqrtSnn.SetTextSize(0.03);
+    sqrtSnn.SetTextFont(42);
+    sqrtSnn.SetNDC();
+    sqrtSnn.DrawLatex(0.155, 0.850, "ALICE pp #sqrt{#it{s}} = 13 TeV");
+
+    // Settings of latex label of OmegaLabel
+    TLatex omegaLabel;
+    omegaLabel.SetTextSize(0.0411899);
+    omegaLabel.SetTextFont(42);
+    omegaLabel.SetNDC();
+    omegaLabel.DrawLatex(0.1569, 0.574, "#Omega^{-}+#bar{#Omega}^{+}");
+
+    // Settings of stat box
+    gPad->Update(); // update to find 'stats' box
+    TPaveStats *st = (TPaveStats*)hProfileInvMassX->FindObject("stats");
+    //st->SetTextSize(0.03);
+    st->SetX1NDC(0.146);
+    st->SetX2NDC(0.363);
+    st->SetY1NDC(0.617);
+    st->SetY2NDC(0.801);
+    st->SetBorderSize(0);
+
+    // Write canvas of fitted inv mass distr
+    gROOT->SetBatch(kFALSE);
+    gPad->Update();
+    cSideBand->Update();
+    cSideBand->Write();
+  }
+  // Plot the signal evolution
+  gROOT->SetBatch(kTRUE);
+  TGraphErrors *NumberOfCascades = new TGraphErrors(7, bins, signalArr, errBins, errSignal);
+  NumberOfCascades->SetTitle(Form("Number_of_cascades_for_%s_from_%d_to_%d_mult", inHist3D->GetName(), leftCentr, rightCentr));
+  NumberOfCascades->GetXaxis()->SetTitle("Bin number");
+  NumberOfCascades->GetYaxis()->SetTitle("Number of cascades");
+  NumberOfCascades->SetMarkerStyle(20);
+  TCanvas *cSignal = new TCanvas(Form("Number_of_cascades_for_%s_from_%d_to_%d_mult", inHist3D->GetName(), leftCentr, rightCentr),"PtHist",10,10,1200,900);
+  cSignal->cd();
+  NumberOfCascades->Draw("AP");
+  cSignal->Update();
+  gROOT->SetBatch(kFALSE);
+  cSignal->Write();
 }
 
 void SignalExtractionPt(const Double_t *xPtBins, const Int_t nPtBins, TH3D *inHist3D, Int_t leftCentr, Int_t rightCentr, TH1D* inHist, TFile* outFile){
@@ -593,7 +745,8 @@ void make_results(const Char_t* fileNameData, const Char_t* fileNameEff, const C
   // Create output file
   outFile = new TFile(outputFileName, "RECREATE");
   // Extract the signal from 3d inv mass hist
-  SignalExtractionPt(xBinsMB, nPtBinsMB, hInvMassSum, 1, 11, hOmegaMB, outFile); // 1 - 11 means 0 - 100 %
+  SignalExtractionPtSideBand(xBinsMB, nPtBinsMB, hInvMassSum, 1, 11, hOmegaMB, outFile);
+  //SignalExtractionPt(xBinsMB, nPtBinsMB, hInvMassSum, 1, 11, hOmegaMB, outFile); // 1 - 11 means 0 - 100 %
   SignalExtractionPt(xBinsHM, nPtBinsHM, hInvMassSum, 1, 3, hOmegaHM, outFile); // 1 - 3 means 0 - 10 %
   SignalExtractionPt(xBinsHM, nPtBinsHM, hInvMassSum, 1, 1, hOmegaVHM, outFile); // 1 - 1 means 0 - 1 %
 
