@@ -10,9 +10,7 @@
 
   analyze_tree("./outputTreesMC/mc_tree_all.dat", "./outputAnal/mc_anal_27_MCclosure.root", 0, 1)
 
-
   analyze_tree("./outputTreesMC/data_tree_all.dat", "./outputAnal/data_10Feb.root", 0, 0)
-
 
   analyze_tree("./outputTreesMC/mc_tree_pp17j_pp18i_omega.root", "./outputAnal/mc_anal_2feb_injected.root", 0, 1)
 */
