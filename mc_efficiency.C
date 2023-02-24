@@ -7,9 +7,9 @@
   root
   .L mc_efficiency.C+
 
-  mc_efficiency("./outputTreesMC/mc_tree_all.dat", "./outputEff/mc_Eff_24Feb.root", 0)
+  mc_efficiency("./outputTreesDatLists/mc_tree_all.dat", "./outputEff/mc_Eff_24Feb.root", 0)
 
-  mc_efficiency("./outputTreesMC/mc_tree_pp17j_pp18i_omega.root", "./outputEff/mc_Eff_24feb_injected.root", 0)
+  mc_efficiency("/disk/User_dirs/rnepeiv/omegaTreesMC/mc_tree_pp17j_pp18i_omega.root", "./outputEff/mc_Eff_24feb_injected.root", 0)
 
 */
 
