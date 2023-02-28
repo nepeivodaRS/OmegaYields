@@ -199,24 +199,26 @@ Bool_t CheckCascStandardCuts(AliAnalysisPIDCascade* cascade) {
   AliAnalysisPIDCascadeV0* v0 = cascade->GetV0();
   AliAnalysisPIDCascadeTrack* bachelor = cascade->GetBachAnalysisTrack();
   const Double_t bachDCA = GetAbsImpactParameterXY(bachelor);
-  const Double_t negDCA  = GetAbsImpactParameterXY(v0->GetNegAnalysisTrack());
-  const Double_t posDCA  = GetAbsImpactParameterXY(v0->GetPosAnalysisTrack());
+  // const Double_t negDCA  = GetAbsImpactParameterXY(v0->GetNegAnalysisTrack());
+  // const Double_t posDCA  = GetAbsImpactParameterXY(v0->GetPosAnalysisTrack());
   const Double_t cascPA     = cascade->GetCascCosinePA();
   const Double_t cascR      = cascade->GetCascRadius();
   const Double_t dMassOmega     = cascade->GetIMO() - massOmega;
   const Double_t dMassLambda = v0->GetIML() - massLambda;
   AliAnalysisPIDCascadeTrack* tr[3] = {cascade->GetBachAnalysisTrack(), 
-                                       cascade->GetV0()->GetPosAnalysisTrack(),
-                                       cascade->GetV0()->GetNegAnalysisTrack()};
+                                       cascade->GetV0()->GetPosAnalysisTrack(), // tr 1 -> pi+ -
+                                       cascade->GetV0()->GetNegAnalysisTrack()}; // tr 2 -> p- +
   if(cascade->GetCharge() < 0) {
     AliAnalysisPIDCascadeTrack* dummy = tr[1];
     tr[1] = tr[2];
     tr[2] = dummy;
   }
+  const Double_t mesonDCA  = GetAbsImpactParameterXY(tr[1]);
+  const Double_t barionDCA  = GetAbsImpactParameterXY(tr[2]);
 
   // Track selection
   for (Int_t i = 0; i < 3; ++i) {
-    if(tr[i]->GetTPCNcls() < 80 ||
+    if(tr[i]->GetTPCNcls() < 70 ||
       !(tr[i]->GetStatus() & AliESDtrack::kTPCrefit) ||
       TMath::Abs(tr[i]->GetEta()) > 0.8 ||
       !tr[i]->HasTPCPID())
@@ -225,9 +227,9 @@ Bool_t CheckCascStandardCuts(AliAnalysisPIDCascade* cascade) {
   // hCascStat->Fill("Track Standard", 1);
 
   // TPC PID cuts
-  if(TMath::Abs(tr[0]->GetNSigmaKaonTPC()) > 4 ||
-    TMath::Abs(tr[1]->GetNSigmaPionTPC()) > 4 ||
-    TMath::Abs(tr[2]->GetNSigmaProtonTPC()) > 4)
+  if(TMath::Abs(tr[0]->GetNSigmaKaonTPC()) > 5 ||
+    TMath::Abs(tr[1]->GetNSigmaPionTPC()) > 5 ||
+    TMath::Abs(tr[2]->GetNSigmaProtonTPC()) > 5)
     return kFALSE;
   // hCascStat->Fill("TPC Standard", 1);
 
@@ -238,21 +240,21 @@ Bool_t CheckCascStandardCuts(AliAnalysisPIDCascade* cascade) {
   // hCascStat->Fill("K TOF Standard", 1);
 
   // Topo cuts
-  if(cascPA < 0.98 || 
-    cascR < 0.6 || cascR > 100 ||
-    posDCA < 0.03 ||
-    negDCA < 0.03 ||
-    //cascade->GetCascDCA() > 1.5 ||
-    TMath::Abs(dMassLambda) > 0.006 ||
-    v0->GetDCAV0Daughters() > 1.6 ||
-    v0->GetV0CosinePA() < 0.98 ||
-    v0->GetRadius() < 1.4 || v0->GetRadius() > 100 ||
-    v0->GetDCAPV() < 0.07 ||
-    bachDCA < 0.05 ||
+  if(cascPA < 0.97 || 
+    cascR < 0.5 || cascR > 100 ||
+    mesonDCA < 0.04 ||
+    barionDCA < 0.03 ||
+    cascade->GetCascDCA() > 1.3 || // OMEGA daughters DCA bach to V0
+    TMath::Abs(dMassLambda) > 0.008 ||
+    v0->GetDCAV0Daughters() > 1.5 ||
+    v0->GetV0CosinePA() < 0.97 ||
+    v0->GetRadius() < 1.1 || v0->GetRadius() > 100 ||
+    v0->GetDCAPV() < 0.06 ||
+    bachDCA < 0.04 ||
     cascade->GetCascRadius()/cascade->GetPtCasc() > 15 ||
-    v0->GetRadius()/cascade->GetPtCasc() > 40 ||
-    //cascade->GetCascDCAPV() > 1.0 ||
-    cascade->GetV0DCA() > 10)
+    v0->GetRadius()/cascade->GetPtCasc() > 40) // ||
+    //cascade->GetCascDCAPV() > 1.0 || //  OMEGA TO PV DCA .. value?
+    //cascade->GetV0DCA() > 10) // OMEGA to V0 ... value?
     return kFALSE;
   return kTRUE;
 }

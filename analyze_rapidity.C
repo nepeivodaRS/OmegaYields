@@ -9,6 +9,8 @@
   .L analyze_rapidity.C+
 
   analyze_rapidity("./outputTreesMC/mc_tree_all.dat", "./outputRapidity/mc_rapidity_3feb.root", 0, 1)
+
+  analyze_rapidity("/disk/User_dirs/rnepeiv/omegaTreesMC/mc_tree_pp17j_pp18i_omega.root", "./outputRapidity/mc_rapidity_24feb_inj.root", 0, 1)
 */
 
 void InitHists(){
