@@ -1,19 +1,16 @@
-// #include "helpFunc.C"
 #include "ptDistr.h"
 
 /*
   .L ptDistr.C
 
-  make_results("./outputAnal/data_10Feb.root", "./outputEff/mc_Eff_26.root", "./outputPtHists/PtHist_16feb_data.root", 0)
-  make_results("./outputAnal/data_10Feb.root", "./outputEff/mc_Eff_2feb_injected.root", "./outputPtHists/PtHist_10feb_data.root", 0)
+  make_results("./outputAnal/data_24Feb.root", "./outputEff/mc_Eff_24Feb.root", "./outputPtHists/PtHist_24feb_data.root", 0)
+  make_results("./outputAnal/mc_24feb.root", "./outputEff/mc_Eff_24Feb.root", "./outputPtHists/PtHist_24feb_mc.root", 1)
 
-  make_results("./outputAnal/mc_anal_2feb_injected.root", "./outputEff/mc_Eff_2feb_injected.root", "./outputPtHists/PtHist_2feb_injected.root", 1)
-  make_results("./outputAnal/mc_anal_27_MCclosureFixed.root", "./outputEff/mc_Eff_2feb_injected.root", "./outputPtHists/PtHist_2feb_injected_sb_mc.root", 1)
-  
+  make_results("./outputAnal/data_24Feb.root", "./outputEff/mc_Eff_24feb_injected.root", "./outputPtHists/PtHist_24feb_data_injEff.root", 0)
+  make_results("./outputAnal/mc_24feb.root", "./outputEff/mc_Eff_24feb_injected.root", "./outputPtHists/PtHist_24feb_mc_injEff.root", 1)
  */
 
-TFile* FindFileFresh(const Char_t* fileName)
-{
+TFile* FindFileFresh(const Char_t* fileName){
   // Find file
   TFile *file = (TFile*)gROOT->GetListOfFiles()->FindObject(fileName);
   if(file) {
@@ -29,8 +26,7 @@ TFile* FindFileFresh(const Char_t* fileName)
   return file;
 }
 
-Double_t rap_correction(Double_t* x, Double_t* par)
-{
+Double_t rap_correction(Double_t* x, Double_t* par){
   Double_t pt = x[0];  
 
   Double_t eta  = par[0];
@@ -53,8 +49,7 @@ void NormalizeHistogram(TH1D* hist){
   }
 }
 
-Double_t DoubleSidedCB2(Double_t x, Double_t mu, Double_t width, Double_t a1, Double_t p1, Double_t a2, Double_t p2)
-{
+Double_t DoubleSidedCB2(Double_t x, Double_t mu, Double_t width, Double_t a1, Double_t p1, Double_t a2, Double_t p2){
   Double_t u   = (x-mu)/width;
   Double_t A1  = TMath::Power(p1/TMath::Abs(a1),p1)*TMath::Exp(-a1*a1/2);
   Double_t A2  = TMath::Power(p2/TMath::Abs(a2),p2)*TMath::Exp(-a2*a2/2);
@@ -68,13 +63,12 @@ Double_t DoubleSidedCB2(Double_t x, Double_t mu, Double_t width, Double_t a1, Do
   return result;
 }
 
-Double_t DoubleSidedCB(Double_t* x, Double_t *par)
-{
+Double_t DoubleSidedCB(Double_t* x, Double_t *par){
   return(par[0] * DoubleSidedCB2(x[0], par[1],par[2],par[3],par[4],par[5],par[6]));
 }
 
 Double_t background(Double_t *x, Double_t *par)  {
-return par[0] + par[1]*x[0] + par[2]*x[0]*x[0];
+  return par[0] + par[1]*x[0] + par[2]*x[0]*x[0];
 }
 
 Double_t GAUSS(Double_t *x, Double_t *par){
@@ -359,7 +353,7 @@ void SignalExtractionPtSideBand(const Double_t *xPtBins, const Int_t nPtBins, TH
   cSignal->Write();
 }
 
-void SignalExtractionPt(const Double_t *xPtBins, const Int_t nPtBins, TH3D *inHist3D, Int_t leftCentr, Int_t rightCentr, TH1D* inHist, TFile* outFile){
+void SignalExtractionPtFixedBG(const Double_t *xPtBins, const Int_t nPtBins, TH3D *inHist3D, Int_t leftCentr, Int_t rightCentr, TH1D* inHist, TFile* outFile){
   // Set stat box to show only mean and number of entries
   gStyle->SetOptStat("me");
   gStyle->SetOptFit(1);
@@ -376,7 +370,7 @@ void SignalExtractionPt(const Double_t *xPtBins, const Int_t nPtBins, TH3D *inHi
   double signal[7] = {0};
   double errSignal[7] = {0};
   // Create dir to store all the fitted hists in centrality region from 'leftCentr' to 'rightCentr' bin
-  TDirectory* dir = outFile->mkdir(Form("PtFitHists_%s_from_%d_to_%d_centr", inHist3D->GetName(), leftCentr, rightCentr));
+  TDirectory* dir = outFile->mkdir(Form("FixedBGPtFitHists_%s_from_%d_to_%d_centr", inHist3D->GetName(), leftCentr, rightCentr));
   dir->cd();
   // Clone hist not to change the original one
   TH3D* invMassHist = (TH3D*)inHist3D->Clone();
@@ -427,6 +421,196 @@ void SignalExtractionPt(const Double_t *xPtBins, const Int_t nPtBins, TH3D *inHi
     fitFcnRedefined->FixParameter(0,parBG[0]);
     fitFcnRedefined->FixParameter(1,parBG[1]);
     fitFcnRedefined->FixParameter(2,parBG[2]);
+    fitFcnRedefined->SetNpx(1e5);
+    fitFcnRedefined->SetLineColor(kRed+1);
+    // Create canvas for fitted inv mass
+    TCanvas *c1 = new TCanvas(Form("InvMassFit_bin_%d_from_%d_to_%d_centr", i+1, leftCentr, rightCentr),"PtHist",10,10,1200,900);
+    c1->cd();
+    TFitResultPtr FitResult = hProfileInvMassX->Fit("fitFcn2","WRSL");
+    fitFcnRedefined->GetParameters(par);
+    // Fill histogram with fitted signal: integral divided by the bin width. And eval the error of each bin
+    Double_t FillValue = par[3];
+    std::cout << "bin number: " << i+1 << " signal value: " << FillValue << std::endl;
+    inHist->Fill((xPtBins[i] + xPtBins[i+1])/2., FillValue);
+    inHist->SetBinError(i+1, FitResult->ParError(3));
+    // Points for Gaussian mean evolution graph
+    mean[i] = par[4];
+    errMean[i] = FitResult->ParError(4);
+    // Points for Gaussian sigma evolution graph
+    sigma[i] = par[5];
+    errSigma[i] = FitResult->ParError(5);
+    // Points for signal graph
+    signal[i] = par[3];
+    errSignal[i] = FitResult->ParError(3);
+    // Points for chi square graph
+    chisq[i] = fitFcnRedefined->GetChisquare()/fitFcnRedefined->GetNDF();
+    // Addition of fitted signal and background curves to our canvas
+    TF1 *backFcn = new TF1("backFcn",background,-0.03,0.03,3);
+    TF1 *signalFcn = new TF1("signalFcn",GAUSSredifined,-0.03,0.03,3);
+    
+    signalFcn->SetNpx(1e4);
+    backFcn->SetParameters(par);
+    backFcn->SetLineStyle(2);
+    backFcn->SetLineColor(kCyan+2); //{kBlack, kRed+1 , kBlue+1, kGreen+3, kMagenta+1, kOrange-1,kCyan+2,kYellow+2};
+    backFcn->Draw("same");
+
+    signalFcn->SetLineColor(kMagenta+1);
+    signalFcn->SetParameters(&par[3]);
+    signalFcn->Draw("same");
+
+    // Settings of Legend
+    TLegend *legend=new TLegend(0.6,0.65,0.88,0.85);
+    legend->SetTextFont(42);
+    legend->SetTextSize(0.03);
+    legend->SetLineColorAlpha(0.,0.);
+    legend->SetFillColorAlpha(0.,0.);
+    legend->SetBorderSize(0.);
+    legend->AddEntry(hProfileInvMassX,"Data (stat uncert.)","lpe");
+    legend->AddEntry(fitFcnRedefined,"fit (signal + bkg.)","l");
+    legend->AddEntry(backFcn,"estimated bkg. (pol2)","l");
+    legend->AddEntry(signalFcn,"estimated signal (Gauss)","l");
+    legend->Draw("same");
+
+    // Settings of latex label of pt range
+    TLatex ptRange;
+    ptRange.SetTextSize(0.03);
+    ptRange.SetTextFont(42);
+    ptRange.SetNDC();
+    ptRange.DrawLatex(0.155, 0.814, Form("%.2f GeV/#it{c} < #it{p}_{T} < %.2f GeV/#it{c}", xPtBins[i], xPtBins[i+1]));
+
+    // Settings of latex label of SqrtSnn
+    TLatex sqrtSnn;
+    sqrtSnn.SetTextSize(0.03);
+    sqrtSnn.SetTextFont(42);
+    sqrtSnn.SetNDC();
+    sqrtSnn.DrawLatex(0.155, 0.850, "ALICE pp #sqrt{#it{s}} = 13 TeV");
+
+    // Settings of latex label of OmegaLabel
+    TLatex omegaLabel;
+    omegaLabel.SetTextSize(0.0411899);
+    omegaLabel.SetTextFont(42);
+    omegaLabel.SetNDC();
+    omegaLabel.DrawLatex(0.1569, 0.574, "#Omega^{-}+#bar{#Omega}^{+}");
+
+    // Settings of stat box
+    gPad->Update(); // update to find 'stats' box
+    TPaveStats *st = (TPaveStats*)hProfileInvMassX->FindObject("stats");
+    //st->SetTextSize(0.03);
+    st->SetX1NDC(0.146);
+    st->SetX2NDC(0.363);
+    st->SetY1NDC(0.617);
+    st->SetY2NDC(0.801);
+    st->SetBorderSize(0);
+
+    // Write canvas of fitted inv mass distr
+    gROOT->SetBatch(kFALSE);
+    gPad->Update();
+    c1->Update();
+    c1->Write();
+  }
+  // Plot the Gaussian mean fit value evolution
+  gROOT->SetBatch(kTRUE);
+  TGraphErrors *MeanGaussFit = new TGraphErrors(7, bins, mean, errBins, errMean);
+  MeanGaussFit->SetTitle(Form("#mu of the Gaussain fit for %s from %d to %d mult", inHist3D->GetName(), leftCentr, rightCentr));
+  MeanGaussFit->GetXaxis()->SetTitle("Bin number");
+  MeanGaussFit->GetYaxis()->SetTitle("#mu");
+  MeanGaussFit->SetMarkerStyle(20);
+  TCanvas *c2 = new TCanvas(Form("#mu of the Gaussain fit for %s from %d to %d mult", inHist3D->GetName(), leftCentr, rightCentr),"PtHist",10,10,1200,900);
+  c2->cd();
+  MeanGaussFit->Draw("AP");
+  c2->Update();
+  gROOT->SetBatch(kFALSE);
+  c2->Write();
+  // Plot the Gaussian sigma fit value evolution
+  gROOT->SetBatch(kTRUE);
+  TGraphErrors *SigmaGaussFit = new TGraphErrors(7, bins, sigma, errBins, errSigma);
+  SigmaGaussFit->SetTitle(Form("#sigma of the Gaussain fit for %s from %d to %d mult", inHist3D->GetName(), leftCentr, rightCentr));
+  SigmaGaussFit->GetXaxis()->SetTitle("Bin number");
+  SigmaGaussFit->GetYaxis()->SetTitle("#sigma");
+  SigmaGaussFit->SetMarkerStyle(20);
+  TCanvas *c4 = new TCanvas(Form("#sigma of the Gaussain fit for %s from %d to %d mult", inHist3D->GetName(), leftCentr, rightCentr),"PtHist",10,10,1200,900);
+  c4->cd();
+  SigmaGaussFit->Draw("AP");
+  c4->Update();
+  gROOT->SetBatch(kFALSE);
+  c4->Write();
+  // Plot the signal evolution
+  gROOT->SetBatch(kTRUE);
+  TGraphErrors *NumberOfCascades = new TGraphErrors(7, bins, signal, errBins, errSignal);
+  NumberOfCascades->SetTitle(Form("Number_of_cascades_for_%s_from_%d_to_%d_mult", inHist3D->GetName(), leftCentr, rightCentr));
+  NumberOfCascades->GetXaxis()->SetTitle("Bin number");
+  NumberOfCascades->GetYaxis()->SetTitle("Number of cascades");
+  NumberOfCascades->SetMarkerStyle(20);
+  TCanvas *c3 = new TCanvas(Form("Number_of_cascades_for_%s_from_%d_to_%d_mult", inHist3D->GetName(), leftCentr, rightCentr),"PtHist",10,10,1200,900);
+  c3->cd();
+  NumberOfCascades->Draw("AP");
+  c3->Update();
+  gROOT->SetBatch(kFALSE);
+  c3->Write();
+  // Plot the chi square evolution
+  gROOT->SetBatch(kTRUE);
+  TGraphErrors *gChiSquare = new TGraphErrors(7, bins, chisq, errBins, errChisq);
+  gChiSquare->SetTitle(Form("Chi_sqaure_for_%s_from_%d_to_%d_mult", inHist3D->GetName(), leftCentr, rightCentr));
+  gChiSquare->GetXaxis()->SetTitle("Bin number");
+  gChiSquare->GetYaxis()->SetTitle("#chi^{2}/ndf");
+  gChiSquare->SetMarkerStyle(20);
+  TCanvas *c5 = new TCanvas(Form("Chi_sqaure_for_%s_from_%d_to_%d_mult", inHist3D->GetName(), leftCentr, rightCentr),"PtHist",10,10,1200,900);
+  c5->cd();
+  gChiSquare->Draw("AP");
+  c5->Update();
+  gROOT->SetBatch(kFALSE);
+  c5->Write();
+  // Go back to default dir in output file
+  dir->cd("/");
+}
+
+void SignalExtractionPtDef(const Double_t *xPtBins, const Int_t nPtBins, TH3D *inHist3D, Int_t leftCentr, Int_t rightCentr, TH1D* inHist, TFile* outFile){
+  // Set stat box to show only mean and number of entries
+  gStyle->SetOptStat("me");
+  gStyle->SetOptFit(1);
+  // Setup for Gaussian mean graph
+  double bins[7] = {1, 2, 3, 4, 5, 6, 7};
+  double mean[7] = {0};
+  double sigma[7] = {0};
+  double chisq[7] = {0};
+  double errBins[7] = {0};
+  double errMean[7] = {0};
+  double errSigma[7] = {0};
+  double errChisq[7] = {0};
+  // Setup for Signal graph
+  double signal[7] = {0};
+  double errSignal[7] = {0};
+  // Create dir to store all the fitted hists in centrality region from 'leftCentr' to 'rightCentr' bin
+  TDirectory* dir = outFile->mkdir(Form("DefPtFitHists_%s_from_%d_to_%d_centr", inHist3D->GetName(), leftCentr, rightCentr));
+  dir->cd();
+  // Clone hist not to change the original one
+  TH3D* invMassHist = (TH3D*)inHist3D->Clone();
+  invMassHist->GetZaxis()->SetRange(leftCentr, rightCentr);
+  invMassHist->Write();
+  TH2D* hProfileInvMassZ = static_cast<TH2D*>(invMassHist->Project3D("xy")); // doesn't work w/o static cast; projects in range that was set above
+  hProfileInvMassZ->Write();
+  // Loop over all PtBins and fit inv mass spectra
+  for(Int_t i = 0; i < nPtBins; ++i) {
+    gROOT->SetBatch(kTRUE);
+    TH1D* hProfileInvMassX = hProfileInvMassZ->ProjectionX("_px", hProfileInvMassZ->GetYaxis()->FindBin(xPtBins[i] + 0.00001), hProfileInvMassZ->GetYaxis()->FindBin(xPtBins[i+1]-0.00001));
+    hProfileInvMassX->SetTitle(Form("M_{inv} in pt bins fit, %d bin",  i+1));
+    hProfileInvMassX->SetXTitle("#it{M}_{inv} - #it{M}_{#Omega^{-} (#bar{#Omega}^{+})} [GeV/#it{c}^{2}]");
+    hProfileInvMassX->SetYTitle("Counts");
+    // BG fitting
+    TCanvas *cBG = new TCanvas(Form("InvMassFit_bin_%d_from_%d_to_%d_centr_BG", i+1, leftCentr, rightCentr),"PtHistBG",10,10,1200,900);
+    cBG->cd();
+    Double_t sigPickApprox = hProfileInvMassX->GetBinContent(hProfileInvMassX->GetMaximumBin()); // 0 guess for the first fit
+    TF1 *fitFcn = new TF1("fitFcn",fitFunctionG,-0.03, 0.03,6);
+    fitFcn->SetParameters(1,1,1,sigPickApprox,0,0.0015);
+    TH1D* hProfileInvMassXFirstFit = (TH1D*)hProfileInvMassX->Clone();
+    hProfileInvMassXFirstFit->Fit("fitFcn","WRL");
+    Double_t par[6];
+    fitFcn->GetParameters(par);
+    par[5] = TMath::Abs(par[5]); // sometimes sigma is negative
+    par[3] = par[3]*par[5]*TMath::Power(TMath::TwoPi(), 0.5)/(0.06/nMinvBins); // from initial guess of A to S
+    // Make fit once again with initial guess based on the previous fit (Stage 2)
+    TF1 *fitFcnRedefined = new TF1("fitFcn2",fitFunctionRedifined,-0.03, 0.03,6);
+    fitFcnRedefined->SetParameters(par);
     fitFcnRedefined->SetNpx(1e5);
     fitFcnRedefined->SetLineColor(kRed+1);
     // Create canvas for fitted inv mass
@@ -745,8 +929,9 @@ void make_results(const Char_t* fileNameData, const Char_t* fileNameEff, const C
   // Create output file
   outFile = new TFile(outputFileName, "RECREATE");
   // Extract the signal from 3d inv mass hist
-  SignalExtractionPtSideBand(xBinsMB, nPtBinsMB, hInvMassSum, 1, 11, hOmegaMB, outFile);
-  //SignalExtractionPt(xBinsMB, nPtBinsMB, hInvMassSum, 1, 11, hOmegaMB, outFile); // 1 - 11 means 0 - 100 %
+  //SignalExtractionPtSideBand(xBinsMB, nPtBinsMB, hInvMassSum, 1, 11, hOmegaMB, outFile);
+  //SignalExtractionPtFixedBG(xBinsMB, nPtBinsMB, hInvMassSum, 1, 11, hOmegaMB, outFile); // 1 - 11 means 0 - 100 %
+  SignalExtractionPtDef(xBinsMB, nPtBinsMB, hInvMassSum, 1, 11, hOmegaMB, outFile); // 1 - 11 means 0 - 100 %
   SignalExtractionPt(xBinsHM, nPtBinsHM, hInvMassSum, 1, 3, hOmegaHM, outFile); // 1 - 3 means 0 - 10 %
   SignalExtractionPt(xBinsHM, nPtBinsHM, hInvMassSum, 1, 1, hOmegaVHM, outFile); // 1 - 1 means 0 - 1 %
 
