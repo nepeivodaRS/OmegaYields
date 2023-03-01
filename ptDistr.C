@@ -3,11 +3,11 @@
 /*
   .L ptDistr.C
 
-  make_results("./outputAnal/data_24Feb.root", "./outputEff/mc_Eff_24Feb.root", "./outputPtHists/PtHist_24feb_data.root", 0)
-  make_results("./outputAnal/mc_24feb.root", "./outputEff/mc_Eff_24Feb.root", "./outputPtHists/PtHist_24feb_mc.root", 1)
+  make_results("./outputAnal/data_24Feb.root", "./outputEff/mc_Eff_28Feb_good_binning_injected.root", "./outputPtHists/PtHist_24feb_data.root", 0)
+  make_results("./outputAnal/mc_24feb.root", "./outputEff/mc_Eff_28Feb_good_binning_injected.root", "./outputPtHists/PtHist_24feb_mc.root", 1)
 
-  make_results("./outputAnal/data_24Feb.root", "./outputEff/mc_Eff_24feb_injected.root", "./outputPtHists/PtHist_24feb_data_injEff.root", 0)
-  make_results("./outputAnal/mc_24feb.root", "./outputEff/mc_Eff_24feb_injected.root", "./outputPtHists/PtHist_24feb_mc_injEff.root", 1)
+  make_results("./outputAnal/data_24Feb.root", "./outputEff/mc_Eff_28Feb_good_binning_injected.root", "./outputPtHists/PtHist_24feb_data_injEff.root", 0)
+  make_results("./outputAnal/mc_24feb.root", "./outputEff/mc_Eff_28Feb_good_binning_injected.root", "./outputPtHists/PtHist_24feb_mc_injEff.root", 1)
  */
 
 TFile* FindFileFresh(const Char_t* fileName){
@@ -392,7 +392,7 @@ void SignalExtractionPtFixedBG(const Double_t *xPtBins, const Int_t nPtBins, TH3
     TH1D* hProfileInvMassBG = (TH1D*)hProfileInvMassX->Clone();
     Int_t leftSideBin = hProfileInvMassBG->FindBin(-0.01);
     Int_t rightSideBin = hProfileInvMassBG->FindBin(0.01);
-    for(Int_t i = leftSideBin; i <= rightSideBin; i++) { hProfileInvMassBG->SetBinContent(i, 0); hProfileInvMassBG->SetBinError(i, NULL);}
+    for(Int_t i = leftSideBin; i <= rightSideBin; i++) { hProfileInvMassBG->SetBinContent(i, 0); hProfileInvMassBG->SetBinError(i, 0.0);}
     TF1 *fitFcnBG = new TF1("fitFcnBG",background,-0.03, 0.03,3);
     fitFcnBG->SetParameters(1,1,1);
     TFitResultPtr FitBG = hProfileInvMassBG->Fit(fitFcnBG, "SQRW");
@@ -931,9 +931,9 @@ void make_results(const Char_t* fileNameData, const Char_t* fileNameEff, const C
   // Extract the signal from 3d inv mass hist
   //SignalExtractionPtSideBand(xBinsMB, nPtBinsMB, hInvMassSum, 1, 11, hOmegaMB, outFile);
   //SignalExtractionPtFixedBG(xBinsMB, nPtBinsMB, hInvMassSum, 1, 11, hOmegaMB, outFile); // 1 - 11 means 0 - 100 %
-  SignalExtractionPtDef(xBinsMB, nPtBinsMB, hInvMassSum, 1, 11, hOmegaMB, outFile); // 1 - 11 means 0 - 100 %
-  SignalExtractionPt(xBinsHM, nPtBinsHM, hInvMassSum, 1, 3, hOmegaHM, outFile); // 1 - 3 means 0 - 10 %
-  SignalExtractionPt(xBinsHM, nPtBinsHM, hInvMassSum, 1, 1, hOmegaVHM, outFile); // 1 - 1 means 0 - 1 %
+  SignalExtractionPtSideBand(xBinsMB, nPtBinsMB, hInvMassSum, 1, 11, hOmegaMB, outFile); // 1 - 11 means 0 - 100 %
+  SignalExtractionPtDef(xBinsHM, nPtBinsHM, hInvMassSum, 1, 3, hOmegaHM, outFile); // 1 - 3 means 0 - 10 %
+  SignalExtractionPtDef(xBinsHM, nPtBinsHM, hInvMassSum, 1, 1, hOmegaVHM, outFile); // 1 - 1 means 0 - 1 %
 
   if(isMC){
     SignalMC(xBinsMB, nPtBinsMB, hInvMassSumMC, 1, 11, hOmegaMBMC, outFile); // 1 - 11 means 0 - 100 %
