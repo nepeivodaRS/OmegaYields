@@ -91,7 +91,7 @@ Double_t fitFunctionCB(Double_t *x, Double_t *par) {
   return background(x,par) + DoubleSidedCB(x,&par[3]);
 }
 
-void CreateRatioPlot(TH1D *h1In,TH1D *h2In, TFile* outFile){
+void CreateRatioPlotMcClosure(TH1D *h1In,TH1D *h2In, TFile* outFile){
   gROOT->SetBatch(kTRUE);
   TH1D* h1 = (TH1D*)h1In->Clone();
   TH1D* h2 = (TH1D*)h2In->Clone();
@@ -857,7 +857,9 @@ void WriteToFile(TFile* outFile, Bool_t isMC = kFALSE){
   // Fill reconstructed pt hists
   TDirectory* dirOut = outFile->mkdir("PtHists");
   dirOut->cd();
-  hOmegaMB->Write();
+  hOmegaMBdef->Write();
+  hOmegaMBSideBand->Write();
+  hOmegaMBBGfix->Write();
   hOmegaHM->Write();
   hOmegaVHM->Write();
 
@@ -914,8 +916,14 @@ void make_results(const Char_t* fileNameData, const Char_t* fileNameEff, const C
   }
 
   // Setup hists
-  hOmegaMB = new TH1D("hOmegaMB", "; #it{p}_{T} (GeV/c)", nPtBinsMB, xBinsMB);
-  hOmegaMB->Sumw2();
+  hOmegaMBdef = new TH1D("hOmegaMBdef", "; #it{p}_{T} (GeV/c)", nPtBinsMB, xBinsMB);
+  hOmegaMBdef->Sumw2();
+
+  hOmegaMBSideBand = new TH1D("hOmegaMBSideBand", "; #it{p}_{T} (GeV/c)", nPtBinsMB, xBinsMB);
+  hOmegaMBSideBand->Sumw2();
+
+  hOmegaMBBGfix = new TH1D("hOmegaMBBGfix", "; #it{p}_{T} (GeV/c)", nPtBinsMB, xBinsMB);
+  hOmegaMBBGfix->Sumw2();
 
   hOmegaMBMC = new TH1D("hOmegaMBMC", "; #it{p}_{T} (GeV/c)", nPtBinsMB, xBinsMB);
   hOmegaMBMC->Sumw2();
@@ -929,9 +937,9 @@ void make_results(const Char_t* fileNameData, const Char_t* fileNameEff, const C
   // Create output file
   outFile = new TFile(outputFileName, "RECREATE");
   // Extract the signal from 3d inv mass hist
-  //SignalExtractionPtSideBand(xBinsMB, nPtBinsMB, hInvMassSum, 1, 11, hOmegaMB, outFile);
-  //SignalExtractionPtFixedBG(xBinsMB, nPtBinsMB, hInvMassSum, 1, 11, hOmegaMB, outFile); // 1 - 11 means 0 - 100 %
-  SignalExtractionPtSideBand(xBinsMB, nPtBinsMB, hInvMassSum, 1, 11, hOmegaMB, outFile); // 1 - 11 means 0 - 100 %
+  SignalExtractionPtSideBand(xBinsMB, nPtBinsMB, hInvMassSum, 1, 11, hOmegaMBSideBand, outFile); // 1 - 11 means 0 - 100 %
+  SignalExtractionPtFixedBG(xBinsMB, nPtBinsMB, hInvMassSum, 1, 11, hOmegaMBBGfix, outFile); // 1 - 11 means 0 - 100 %
+  SignalExtractionPtDef(xBinsMB, nPtBinsMB, hInvMassSum, 1, 11, hOmegaMBdef, outFile); // 1 - 11 means 0 - 100 %
   SignalExtractionPtDef(xBinsHM, nPtBinsHM, hInvMassSum, 1, 3, hOmegaHM, outFile); // 1 - 3 means 0 - 10 %
   SignalExtractionPtDef(xBinsHM, nPtBinsHM, hInvMassSum, 1, 1, hOmegaVHM, outFile); // 1 - 1 means 0 - 1 %
 
@@ -943,10 +951,10 @@ void make_results(const Char_t* fileNameData, const Char_t* fileNameEff, const C
   TF1* fRap = new TF1("fRap", rap_correction, 0.0, 50.0, 2);
   fRap->SetParameters(0.8, massOmega);
 
-  const Int_t nSpectra = 3;
-  TH1D* hEff[nSpectra] = { hEffOmegaMB, hEffOmegaHM, hEffOmegaVHM };
-  TH1D* hRaw[nSpectra] = { hOmegaMB,    hOmegaHM,    hOmegaVHM };
-  TH1D* hGen[nSpectra] = { hGenOmegaMB,    hGenOmegaHM,    hGenOmegaVHM};
+  const Int_t nSpectra = 5;
+  TH1D* hEff[nSpectra] = { hEffOmegaMB, hEffOmegaMB, hEffOmegaMB, hEffOmegaHM, hEffOmegaVHM };
+  TH1D* hRaw[nSpectra] = { hOmegaMBdef, hOmegaMBBGfix, hOmegaMBSideBand, hOmegaHM, hOmegaVHM };
+  TH1D* hGen[nSpectra] = { hGenOmegaMB, hGenOmegaMB, hGenOmegaMB,   hGenOmegaHM,    hGenOmegaVHM};
 
   // Normalize results
   TH1D* hNorm = (TH1D*)fileData->Get("hNorm");
@@ -955,7 +963,9 @@ void make_results(const Char_t* fileNameData, const Char_t* fileNameEff, const C
     const Double_t vtxScale = (hNorm->GetBinContent(1)+hNorm->GetBinContent(2)+hNorm->GetBinContent(3)) /
       (hNorm->GetBinContent(2)+hNorm->GetBinContent(3));
     nMB *= vtxScale;
-    hOmegaMB->Scale(1.0/nMB);
+    hOmegaMBdef->Scale(1.0/nMB);
+    hOmegaMBBGfix->Scale(1.0/nMB);
+    hOmegaMBSideBand->Scale(1.0/nMB);
     if(isMC)
       hGenOmegaMB->Scale(1.0/nMB);
   }
@@ -975,7 +985,7 @@ void make_results(const Char_t* fileNameData, const Char_t* fileNameEff, const C
   // Normalize and correct histograms
   for(Int_t i = 0; i < nSpectra; i++) {
     NormalizeHistogram(hRaw[i]);
-    hRaw[i]->Divide(hEff[i]);
+    //hRaw[i]->Divide(hEff[i]);
     // Apply rapidity correction
     hRaw[i]->Divide(fRap);
     hRaw[i]->GetYaxis()->SetTitle("(#Omega^{-}+#bar{#Omega}^{+}):  1/#it{N}_{inel}d^{2}#it{N}/d#it{p}_{T}d#it{y} ((GeV/#it{c})^{-1})");
@@ -983,7 +993,7 @@ void make_results(const Char_t* fileNameData, const Char_t* fileNameEff, const C
       NormalizeHistogram(hGen[i]);
       hGen[i]->Divide(fRap);
       hGen[i]->GetYaxis()->SetTitle("(#Omega^{-}+#bar{#Omega}^{+}): 1/#it{N}_{inel}d^{2}#it{N}/d#it{p}_{T}d#it{y} ((GeV/#it{c})^{-1})");
-      CreateRatioPlot(hRaw[i], hGen[i], outFile);
+      CreateRatioPlotMcClosure(hRaw[i], hGen[i], outFile);
     }
   }
   WriteToFile(outFile, isMC);

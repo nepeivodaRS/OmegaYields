@@ -47,7 +47,10 @@ TList *ListOfPtHists;
 TFile* outFile;
 TFile* fileEff;
 
-TH1D* hOmegaMB;
+TH1D* hOmegaMBdef;
+TH1D* hOmegaMBSideBand;
+TH1D* hOmegaMBBGfix;
+
 TH1D* hOmegaMBMC;
 TH1D* hOmegaHM;
 TH1D* hOmegaVHM;
