@@ -239,7 +239,7 @@ void analyze_tree_withEff(const Char_t* inFileName,
         Int_t bin = 1;
         Int_t EffBin = hEffOmegaMB->GetXaxis()->FindBin(cascade->GetPtCasc());
         if(cascade->GetCharge() < 0){bin = 0;}{
-          hOmegaInvMassVsPt[bin]->Fill(cascade->GetPtCasc(), dMassOmega, event->GetV0Mmultiplicity(), hEffOmegaMB->GetBinContent(EffBin));
+          hOmegaInvMassVsPt[bin]->Fill(cascade->GetPtCasc(), dMassOmega, event->GetV0Mmultiplicity(), 1./hEffOmegaMB->GetBinContent(EffBin));
         }
         hOmegaInconsistencyXi->Fill(dMassXi, dMassOmega);
         // MC closure for signal inside reconstructed
@@ -247,7 +247,7 @@ void analyze_tree_withEff(const Char_t* inFileName,
           if(IsRealOmegaCascade(cascade)){
             if(cascade->GetCharge() < 0){bin = 0;}
               hOmegaInvMassVsPtTrue[bin]->Fill(cascade->GetPtCasc(), dMassOmega, event->GetV0Mmultiplicity());
-              hOmegaInvMassVsPtTrueEffCorr[bin]->Fill(cascade->GetPtCasc(), dMassOmega, event->GetV0Mmultiplicity(), hEffOmegaMB->GetBinContent(EffBin));            
+              hOmegaInvMassVsPtTrueEffCorr[bin]->Fill(cascade->GetPtCasc(), dMassOmega, event->GetV0Mmultiplicity(), 1./hEffOmegaMB->GetBinContent(EffBin));            
           } 
         }
       }

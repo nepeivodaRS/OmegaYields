@@ -4,7 +4,7 @@
   .L ptDistr.C
 
   make_results("./outputAnal/data_2march_effCorr.root", "./outputEff/mc_Eff_28Feb_good_binning_injected.root", "./outputPtHists/PtHist_2march_data.root", 0)
-  make_results("./outputAnal/mc_24feb.root", "./outputEff/mc_Eff_28Feb_good_binning_injected.root", "./outputPtHists/PtHist_24feb_mc.root", 1)
+  make_results("./outputAnal/mc_2march_effCorr.root", "./outputEff/mc_Eff_28Feb_good_binning_injected.root", "./outputPtHists/PtHist_2march_mc.root", 1)
 
   make_results("./outputAnal/data_24Feb.root", "./outputEff/mc_Eff_28Feb_good_binning_injected.root", "./outputPtHists/PtHist_24feb_data_injEff.root", 0)
   make_results("./outputAnal/mc_24feb.root", "./outputEff/mc_Eff_28Feb_good_binning_injected.root", "./outputPtHists/PtHist_24feb_mc_injEff.root", 1)
@@ -937,8 +937,8 @@ void make_results(const Char_t* fileNameData, const Char_t* fileNameEff, const C
   // Create output file
   outFile = new TFile(outputFileName, "RECREATE");
   // Extract the signal from 3d inv mass hist
-  SignalExtractionPtSideBand(xBinsMB, nPtBinsMB, hInvMassSum, 1, 11, hOmegaMBSideBand, outFile); // 1 - 11 means 0 - 100 %
-  SignalExtractionPtFixedBG(xBinsMB, nPtBinsMB, hInvMassSum, 1, 11, hOmegaMBBGfix, outFile); // 1 - 11 means 0 - 100 %
+  // SignalExtractionPtSideBand(xBinsMB, nPtBinsMB, hInvMassSum, 1, 11, hOmegaMBSideBand, outFile); // 1 - 11 means 0 - 100 %
+  // SignalExtractionPtFixedBG(xBinsMB, nPtBinsMB, hInvMassSum, 1, 11, hOmegaMBBGfix, outFile); // 1 - 11 means 0 - 100 %
   SignalExtractionPtDef(xBinsMB, nPtBinsMB, hInvMassSum, 1, 11, hOmegaMBdef, outFile); // 1 - 11 means 0 - 100 %
   SignalExtractionPtDef(xBinsHM, nPtBinsHM, hInvMassSum, 1, 3, hOmegaHM, outFile); // 1 - 3 means 0 - 10 %
   SignalExtractionPtDef(xBinsHM, nPtBinsHM, hInvMassSum, 1, 1, hOmegaVHM, outFile); // 1 - 1 means 0 - 1 %
