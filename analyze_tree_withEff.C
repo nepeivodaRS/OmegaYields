@@ -112,7 +112,7 @@ void analyze_tree_withEff(const Char_t* inFileName,
   // Get Data
   fileEff = FindFileFresh(EffFileName);
   fileEff->cd();
-  hEffOmegaMB = (TH1D*)inFile->Get("hEffOmegaMB");
+  hEffOmegaMB = (TH1D*)fileEff->Get("hEffOmegaMB");
   fileEff->Close();
 
   AliAnalysisPIDCascadeEvent* event = 0;
