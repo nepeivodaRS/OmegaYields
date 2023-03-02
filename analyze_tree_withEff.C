@@ -238,8 +238,8 @@ void analyze_tree_withEff(const Char_t* inFileName,
       if(bPassedStandard){
         hCascStat->Fill("Standard", 1);
         Int_t bin = 1;
+        Int_t EffBin = hEffOmegaMB->GetXaxis()->FindBin(cascade->GetPtCasc());
         if(cascade->GetCharge() < 0){bin = 0;}{
-          Int_t EffBin = hEffOmegaMB->GetXaxis()->FindBin(cascade->GetPtCasc());
           hOmegaInvMassVsPt[bin]->Fill(cascade->GetPtCasc(), dMassOmega, event->GetV0Mmultiplicity(), hEffOmegaMB->GetBinContent(EffBin));
         }
         hOmegaInconsistencyXi->Fill(dMassXi, dMassOmega);
