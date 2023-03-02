@@ -9,7 +9,9 @@
 
   mc_efficiency("./outputTreesDatLists/mc_tree_all.dat", "./outputEff/mc_Eff_24Feb.root", 0)
 
-  mc_efficiency("/disk/User_dirs/rnepeiv/omegaTreesMC/mc_tree_pp17j_pp18i_omega.root", "./outputEff/mc_Eff_24feb_injected.root", 0)
+  mc_efficiency("/disk/User_dirs/rnepeiv/omegaTreesMC/mc_tree_pp17j_pp18i_omega.root", "./outputEff/mc_Eff_2march_injected.root", 0)
+
+  mc_efficiency("/disk/User_dirs/rnepeiv/omegaTreesMC/mc_tree_pp17j_pp18i_omega.root", "./outputEff/mc_Eff_28Feb_good_binning_injected.root", 0)
 
 */
 
@@ -23,7 +25,7 @@ void InitHists(){
   }
 
   hGenOmegaMB = new TH1D("hGenOmegaMB", ";  p_{T} [GeV/c]",
-        nPtBinsMB, xBinsMB);
+        nPtBinsEff, xBinsEff);
   hGenOmegaMB->Sumw2();
 
   hGenOmegaHM = new TH1D("hGenOmegaHM", ";  p_{T} [GeV/c]",
@@ -35,7 +37,7 @@ void InitHists(){
   hGenOmegaVHM->Sumw2();
 
   hRecOmegaMBSd = new TH1D("hRecOmegaMBSd", ";  p_{T} [GeV/c]",
-        nPtBinsMB, xBinsMB);
+        nPtBinsEff, xBinsEff);
   hRecOmegaMBSd->Sumw2();
   
   hRecOmegaHMSd = new TH1D("hRecOmegaHMSd", ";  p_{T} [GeV/c]",
@@ -47,7 +49,7 @@ void InitHists(){
   hRecOmegaVHMSd->Sumw2();
   
   hEffOmegaMB = new TH1D("hEffOmegaMB", ";  p_{T} [GeV/c]",
-        nPtBinsMB, xBinsMB);
+        nPtBinsEff, xBinsEff);
   hEffOmegaMB->Sumw2();
   
   hEffOmegaHM = new TH1D("hEffOmegaHM", ";  p_{T} [GeV/c]",
