@@ -1,4 +1,4 @@
-#include "analyze_tree.h"
+#include "analyze_tree_withEff.h"
 
 /*
   To run code:
@@ -6,13 +6,11 @@
 
   aliroot -l
 
-  .L analyze_tree.C+
+  .L analyze_tree_withEff.C+
 
-  analyze_tree("./outputTreesDatLists/mc_tree_all.dat", "./outputAnal/mc_24feb.root", 0, 1)
+  analyze_tree_withEff("./outputTreesDatLists/mc_tree_all.dat", "./outputEff/mc_Eff_24feb_injected.root", "./outputAnal/mc_24feb_effCorr.root", 0, 1)
 
-  analyze_tree("./outputTreesDatLists/data_tree_all.dat", "./outputAnal/data_24Feb.root", 0, 0)
-
-  analyze_tree("/disk/User_dirs/rnepeiv/omegaTreesMC/mc_tree_pp17j_pp18i_omega.root", "./outputAnal/mc_anal_2feb_injected.root", 0, 1)
+  analyze_tree_withEff("./outputTreesDatLists/data_tree_all.dat", "./outputEff/mc_Eff_24feb_injected.root", "./outputAnal/data_24Feb.root", 0, 0)
 */
 
 void InitHists(){
@@ -88,11 +86,13 @@ void WriteToFile(TFile* outFile){
   outFile->WriteObject(hEventStat, "EventStatistics");
   outFile->WriteObject(hCascStat, "hCascStat");
   outFile->WriteObject(hNorm, "hNorm");
+  outFile->WriteObject(hEffOmegaMB, "hEffOmegaMB");
   outFile->Close();
 }
 
-void analyze_tree(const Char_t* inFileName,
-		const Char_t* outFileName,
+void analyze_tree_withEff(const Char_t* inFileName,
+    const Char_t* EffFileName,
+		const Char_t* outFileName, 
 		const Int_t maxEvents = 0,
     Bool_t isMC = kFALSE)
 {
@@ -109,6 +109,11 @@ void analyze_tree(const Char_t* inFileName,
     hVtxStatus = (TH1D*)inFile->Get("hVtxStatus");
   }
 
+  // Get Data
+  fileEff = FindFileFresh(EffFileName);
+  fileEff->cd();
+  hEffOmegaMB = (TH1D*)inFile->Get("hEffOmegaMB");
+  fileEff->Close();
 
   AliAnalysisPIDCascadeEvent* event = 0;
   TClonesArray* allCascades = 0;
@@ -228,8 +233,10 @@ void analyze_tree(const Char_t* inFileName,
       if(bPassedStandard){
         hCascStat->Fill("Standard", 1);
         Int_t bin = 1;
-        if(cascade->GetCharge() < 0){bin = 0;}
-          hOmegaInvMassVsPt[bin]->Fill(cascade->GetPtCasc(), dMassOmega, event->GetV0Mmultiplicity());
+        if(cascade->GetCharge() < 0){bin = 0;}{
+          Int_t EffBin = hEffOmegaMB->GetXaxis()->FindBin(cascade->GetPtCasc());
+          hOmegaInvMassVsPt[bin]->Fill(cascade->GetPtCasc(), dMassOmega, event->GetV0Mmultiplicity(), hEffOmegaMB->GetBinContent(EffBin));
+        }
         hOmegaInconsistencyXi->Fill(dMassXi, dMassOmega);
         // MC closure for signal inside reconstructed
         if(isMC){

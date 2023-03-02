@@ -468,3 +468,19 @@ TH1D* ReadHistoVtxStatusFromFile(const char *fileIn, Int_t maxFiles = -1, Int_t 
   in.close();
   return hVtxStatus;
 }
+TFile* FindFileFresh(const Char_t* fileName)
+{
+  // Find file
+  TFile *file = (TFile*)gROOT->GetListOfFiles()->FindObject(fileName);
+  if(file) {
+    file->Close();
+    delete file;
+  }
+
+  file = TFile::Open(fileName, "READ");
+
+  if(!file)
+    cout << "File : " << fileName << " was not found" << endl;
+
+  return file;
+}
