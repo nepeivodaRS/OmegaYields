@@ -69,8 +69,13 @@ void InitHists(){
             nPtBinsMB, xBinsMB, nMinvBins, minvBins, nCentrBins, xCentrBins);
     hOmegaInvMassVsPtTrue[i]->Sumw2();
 
+    hOmegaInvMassVsPtTrueEffCorr[i] = new TH3D(Form("hOmegaInvMassVsPtTrueEffCorr_%s", pdgNameOmega[i]), "M_{inv} vs p_{T}; p_{T}^{casc} [GeV/c]; M_{inv} - M_{#Omega} [GeV/c^{2}]; Centrality V0M",
+            nPtBinsMB, xBinsMB, nMinvBins, minvBins, nCentrBins, xCentrBins);
+    hOmegaInvMassVsPtTrueEffCorr[i]->Sumw2();
+
     InvMassList->Add(hOmegaInvMassVsPt[i]);
     InvMassList->Add(hOmegaInvMassVsPtTrue[i]);
+    InvMassList->Add(hOmegaInvMassVsPtTrueEffCorr[i]);
   }
 
   hEventStat = new TH1I("hEventStat","",3,0,3);
@@ -242,7 +247,8 @@ void analyze_tree_withEff(const Char_t* inFileName,
         if(isMC){
           if(IsRealOmegaCascade(cascade)){
             if(cascade->GetCharge() < 0){bin = 0;}
-              hOmegaInvMassVsPtTrue[bin]->Fill(cascade->GetPtCasc(), dMassOmega, event->GetV0Mmultiplicity());                  
+              hOmegaInvMassVsPtTrue[bin]->Fill(cascade->GetPtCasc(), dMassOmega, event->GetV0Mmultiplicity());
+              hOmegaInvMassVsPtTrueEffCorr[bin]->Fill(cascade->GetPtCasc(), dMassOmega, event->GetV0Mmultiplicity(), hEffOmegaMB->GetBinContent(EffBin));            
           } 
         }
       }
