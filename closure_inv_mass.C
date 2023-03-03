@@ -3,7 +3,7 @@
 /*
   .L closure_inv_mass.C
 
-  closure_inv_mass("./outputPtHists/PtHist_2feb_injected_sb_mc.root", "./outputClosure/SignalClosure_20feb_mc_sb", 1)
+  closure_inv_mass("./outputPtHists/PtHist_2march_mc.root", "./outputClosure/SignalClosure_2march_mc_def", 1)
   
  */
 TFile* FindFileFresh(const Char_t* fileName)
@@ -77,7 +77,8 @@ void closure_inv_mass(const Char_t* fileNameData, const Char_t* outputFileName, 
   TFile* f = FindFileFresh(fileNameData);
   f->cd();
   outFile = new TFile(outputFileName, "RECREATE");
-  f->cd("SideBandPtFitHists_hOmegaInvMassVsPt_Omega_from_1_to_11_centr");
+  //f->cd("SideBandPtFitHists_hOmegaInvMassVsPt_Omega_from_1_to_11_centr");
+  f->cd("DefPtFitHists_hOmegaInvMassVsPt_Omega_from_1_to_11_centr");
   //f->ls();
   gROOT->SetBatch(kTRUE);
   TCanvas *canvas1 = new TCanvas();
