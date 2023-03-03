@@ -790,7 +790,7 @@ void SignalMC(const Double_t *xPtBins, const Int_t nPtBins, TH3D *inHist3D, Int_
     Int_t rightSideBin = hProfileInvMassX->FindBin(rightRange);
     Double_t signalMC = hProfileInvMassX->Integral(leftSideBin, rightSideBin);
     signal[i] = signalMC;
-    std::cout << signalMC << std::endl;
+    std::cout << signalMC << " " << hProfileInvMassX->GetEntries() << std::endl;
     errSignal[i] = 0;
 
     hProfileInvMassX->Draw();
@@ -887,7 +887,7 @@ void WriteToFile(TFile* outFile, Bool_t isMC = kFALSE){
   hEffOmegaHM->Write();
   hEffOmegaVHM->Write();
 
-  outFile->Close();
+  //outFile->Close(); // convinient not to close
 }
 
 void make_results(const Char_t* fileNameData, const Char_t* fileNameEff, const Char_t* outputFileName, Bool_t isMC = kFALSE){
@@ -916,8 +916,8 @@ void make_results(const Char_t* fileNameData, const Char_t* fileNameEff, const C
     hGenOmegaHM = (TH1D*)ListOfPtHists->FindObject("hGenOmegaHM");
     hGenOmegaVHM = (TH1D*)ListOfPtHists->FindObject("hGenOmegaVHM");
 
-    TH3D* hInvMassOmegaMC = (TH3D*)ListOfHists->FindObject("hOmegaInvMassVsPtTrue_Omega");
-    TH3D* hInvMassOmegaBarMC = (TH3D*)ListOfHists->FindObject("hOmegaInvMassVsPtTrue_OmegaBar");
+    TH3D* hInvMassOmegaMC = (TH3D*)ListOfHists->FindObject("hOmegaInvMassVsPtTrueEffCorr_Omega");
+    TH3D* hInvMassOmegaBarMC = (TH3D*)ListOfHists->FindObject("hOmegaInvMassVsPtTrueEffCorr_OmegaBar");
     hInvMassSumMC = (TH3D*)hInvMassOmegaMC->Clone();
     TH3D* histToAddMC  = (TH3D*)hInvMassOmegaBarMC->Clone();
     hInvMassSumMC->Add(histToAddMC);

@@ -18,3 +18,11 @@
 #include <TKey.h>
 
 TFile* outFile;
+TCanvas* cRatioPlot;
+// Binning used in MB analysis
+TH1D* hOmegaMBdef;
+TH1D* hOmegaMBSideBand;
+TH1D* hOmegaMBBGfix;
+
+const Int_t nPtBinsMB = 7;
+Double_t xBinsMB[nPtBinsMB+1] = {1.00, 1.40, 1.80, 2.30, 2.80, 3.30, 3.80, 4.80};
