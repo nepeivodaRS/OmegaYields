@@ -1,9 +1,9 @@
 #include "closureAndDiffRecComp.h"
 
 /*
-  .L closure_inv_mass.C
+  .L closureAndDiffRecComp.C
 
-  closure_inv_mass("./outputPtHists/PtHist_2march_mc.root", "./outputClosure/SignalClosure_2march_mc_def.root", 1)
+  closure_inv_mass("./outputPtHists/PtHist_2march_mc.root", "./outputClosure/SignalClosure_2march_mc_sb.root", 1)
   
  */
 TFile* FindFileFresh(const Char_t* fileName)
@@ -209,8 +209,8 @@ void closure_inv_mass(const Char_t* fileNameData, const Char_t* outputFileName, 
     gROOT->SetBatch(kFALSE);
     // Search for dir with specific rec method
     //f->cd("DefPtFitHists_hOmegaInvMassVsPt_Omega_from_1_to_11_centr");
-    f->cd("FixedBGPtFitHists_hOmegaInvMassVsPt_Omega_from_1_to_11_centr");
-    //f->cd("SideBandPtFitHists_hOmegaInvMassVsPt_Omega_from_1_to_11_centr");
+    //f->cd("FixedBGPtFitHists_hOmegaInvMassVsPt_Omega_from_1_to_11_centr");
+    f->cd("SideBandPtFitHists_hOmegaInvMassVsPt_Omega_from_1_to_11_centr");
 
     // Get canvas of number of rec cascades
     cRecNumberOfCasc = findCanvas(gDirectory, "Number_of_cascades_for_hOmegaInvMassVsPt_Omega_from_1_to_11_mult");
