@@ -20,6 +20,8 @@
 TFile* outFile;
 TCanvas* cRatioPlot;
 // Binning used in MB analysis
+TH1D* hOmegaMBPublished;
+
 TH1D* hOmegaMBdef;
 TH1D* hOmegaMBSideBand;
 TH1D* hOmegaMBBGfix;

@@ -3,7 +3,7 @@
 /*
   .L ptDistr.C
 
-  make_results("./outputAnal/data_2march_effCorr.root", "./outputEff/mc_Eff_2march_injected.root", "./outputPtHists/PtHist_2march_data.root", 0)
+  make_results("./outputAnal/data_2march_effCorr.root", "./outputEff/mc_Eff_2march_injected.root", "./outputPtHists/PtHist_15march_data.root", 0)
   make_results("./outputAnal/mc_2march_effCorr.root", "./outputEff/mc_Eff_2march_injected.root", "./outputPtHists/PtHist_2march_mc.root", 1)
 
   make_results("./outputAnal/data_24Feb.root", "./outputEff/mc_Eff_28Feb_good_binning_injected.root", "./outputPtHists/PtHist_24feb_data_injEff.root", 0)
@@ -71,6 +71,14 @@ Double_t background(Double_t *x, Double_t *par)  {
   return par[0] + par[1]*x[0] + par[2]*x[0]*x[0];
 }
 
+Double_t backgroundOnly(Double_t *x, Double_t *par)  {
+  if(x[0] > -0.01001 && x[0] < 0.01001){
+    TF1::RejectPoint();
+    return 0;
+  }
+  return par[0] + par[1]*x[0] + par[2]*x[0]*x[0];
+}
+
 Double_t GAUSS(Double_t *x, Double_t *par){
 return par[0]*exp(-0.5*(((x[0]-par[1])/par[2])*((x[0]-par[1])/par[2])));
 }
@@ -91,7 +99,25 @@ Double_t fitFunctionCB(Double_t *x, Double_t *par) {
   return background(x,par) + DoubleSidedCB(x,&par[3]);
 }
 
-void CreateRatioPlotMcClosure(TH1D *h1In,TH1D *h2In, TFile* outFile){
+Double_t* calcSignalBindSubtraction(const TH1D *h1In, const Double_t & leftBin, const Double_t & rightBin, Double_t *par){
+  static Double_t sum[2] = {0, 0};
+  sum[0] = 0, sum[1] = 0;
+  //std::cout << " Signal start: " << sum[0] << std::endl;
+  Double_t totNumberOfCounts = 0;
+  for(Int_t i = leftBin; i < rightBin; i++){
+    Double_t binCenter = h1In->GetBinCenter(i);
+    Double_t backgroundCounts = background(&binCenter, par);
+    Double_t signalCounts = h1In->GetBinContent(i) - backgroundCounts;
+    //if(signalCounts > 0)
+    sum[0] += signalCounts;
+    //std::cout << "Bin number: " << i <<  ", BinContent " << h1In->GetBinContent(i) << ", BG counts: " << backgroundCounts << std::endl;
+    totNumberOfCounts += h1In->GetBinContent(i) + backgroundCounts;
+  }
+  sum[1] =  TMath::Power(totNumberOfCounts, 0.5);
+  return sum;
+}
+
+void CreateRatioPlotMcClosure(TH1D *h1In, TH1D *h2In, TFile* outFile){
   gROOT->SetBatch(kTRUE);
   TH1D* h1 = (TH1D*)h1In->Clone();
   TH1D* h2 = (TH1D*)h2In->Clone();
@@ -204,7 +230,7 @@ void CreateRatioPlotMcClosure(TH1D *h1In,TH1D *h2In, TFile* outFile){
   dir->cd("/");
 }
 
-void SignalExtractionPtSideBand(const Double_t *xPtBins, const Int_t nPtBins, TH3D *inHist3D, Int_t leftCentr, Int_t rightCentr, TH1D* inHist, TFile* outFile){
+void SignalExtractionPtSideBand(const Double_t *xPtBins, const Int_t nPtBins, const TH3D *inHist3D, Int_t leftCentr, Int_t rightCentr, TH1D* inHist, TFile* outFile){
   // Set stat box to show only mean and number of entries
   gStyle->SetOptStat("me");
   gStyle->SetOptFit(1);
@@ -353,7 +379,7 @@ void SignalExtractionPtSideBand(const Double_t *xPtBins, const Int_t nPtBins, TH
   cSignal->Write();
 }
 
-void SignalExtractionPtFixedBG(const Double_t *xPtBins, const Int_t nPtBins, TH3D *inHist3D, Int_t leftCentr, Int_t rightCentr, TH1D* inHist, TFile* outFile){
+void SignalExtractionPtFixedBG(const Double_t *xPtBins, const Int_t nPtBins, const TH3D *inHist3D, Int_t leftCentr, Int_t rightCentr, TH1D* inHist, TFile* outFile){
   // Set stat box to show only mean and number of entries
   gStyle->SetOptStat("me");
   gStyle->SetOptFit(1);
@@ -560,6 +586,250 @@ void SignalExtractionPtFixedBG(const Double_t *xPtBins, const Int_t nPtBins, TH3
   c5->Update();
   gROOT->SetBatch(kFALSE);
   c5->Write();
+  // Go back to default dir in output file
+  dir->cd("/");
+}
+
+void SignalExtractionCombined(const Double_t *xPtBins, const Int_t nPtBins, const TH3D *inHist3D, Int_t leftCentr, Int_t rightCentr, TH1D* inHist, TFile* outFile){
+  // Set stat box to show only mean and number of entries
+  gStyle->SetOptStat("me");
+  gStyle->SetOptFit(1);
+  // Setup for Gaussian mean graph
+  double bins[7] = {1, 2, 3, 4, 5, 6, 7};
+  double mean[7] = {0};
+  double sigma[7] = {0};
+  double chisq[7] = {0};
+  double errBins[7] = {0};
+  double errMean[7] = {0};
+  double errSigma[7] = {0};
+  double errChisq[7] = {0};
+  // Setup for Signal graph
+  double signal[7] = {0};
+  double signalSubstr[7] = {0};
+  double errSignal[7] = {0};
+  double errSignalSubstr[7] = {0};
+  // Create dir to store all the fitted hists in centrality region from 'leftCentr' to 'rightCentr' bin
+  TDirectory* dir = outFile->mkdir(Form("CombinedPtFitHists_%s_from_%d_to_%d_centr", inHist3D->GetName(), leftCentr, rightCentr));
+  dir->cd();
+  // Clone hist not to change the original one
+  TH3D* invMassHist = (TH3D*)inHist3D->Clone();
+  invMassHist->GetZaxis()->SetRange(leftCentr, rightCentr);
+  invMassHist->Write();
+  TH2D* hProfileInvMassZ = static_cast<TH2D*>(invMassHist->Project3D("xy")); // doesn't work w/o static cast; projects in range that was set above
+  hProfileInvMassZ->Write();
+  // Loop over all PtBins and fit inv mass spectra
+  for(Int_t i = 0; i < nPtBins; ++i) {
+    gROOT->SetBatch(kTRUE);
+    TH1D* hProfileInvMassX = hProfileInvMassZ->ProjectionX("_px", hProfileInvMassZ->GetYaxis()->FindBin(xPtBins[i] + 0.00001), hProfileInvMassZ->GetYaxis()->FindBin(xPtBins[i+1]-0.00001));
+    hProfileInvMassX->SetTitle(Form("M_{inv} in pt bins fit, %d bin",  i+1));
+    hProfileInvMassX->SetXTitle("#it{M}_{inv} - #it{M}_{#Omega^{-} (#bar{#Omega}^{+})} [GeV/#it{c}^{2}]");
+    hProfileInvMassX->SetYTitle("Counts");
+    // BG fitting
+    TCanvas *cBG = new TCanvas(Form("InvMassFit_bin_%d_from_%d_to_%d_centr_BG", i+1, leftCentr, rightCentr),"PtHistBG",10,10,1200,900);
+    cBG->cd();
+    Double_t sigPickApprox = hProfileInvMassX->GetBinContent(hProfileInvMassX->GetMaximumBin()); // 0 guess for the first fit
+    TH1D* hProfileInvMassBG = (TH1D*)hProfileInvMassX->Clone();
+    // Additional safe removal of points
+    Int_t leftSideBin = hProfileInvMassBG->FindBin(-0.01);
+    Int_t rightSideBin = hProfileInvMassBG->FindBin(0.01);
+    for(Int_t i = leftSideBin; i <= rightSideBin; i++) { hProfileInvMassBG->SetBinContent(i, 0); hProfileInvMassBG->SetBinError(i, 0.0);}
+    TF1 *fitFcnBG = new TF1("fitFcnBG",background,-0.03, 0.03,3);
+    fitFcnBG->SetParameters(1,1,1);
+    // fitFcnBG->SetParLimits(0, -10e6, 10e6);
+    // fitFcnBG->SetParLimits(1, -10e6, 10e6);
+    // fitFcnBG->SetParLimits(2, -10e6, 10e6);
+
+    TFitResultPtr FitBG = hProfileInvMassBG->Fit(fitFcnBG, "SQRW");
+    gROOT->SetBatch(kFALSE);
+    gPad->Update();
+    cBG->Update();
+    cBG->Write();
+    gROOT->SetBatch(kTRUE);
+    Double_t parBG[3];
+    fitFcnBG->GetParameters(parBG);
+    // Use BG fitting as an initall guess for the whole 1 stage fitting
+    TF1 *fitFcn = new TF1("fitFcn",fitFunctionG,-0.03, 0.03,6);
+    fitFcn->SetParameters(parBG[0],parBG[1],parBG[2],sigPickApprox,0,0.0015);
+    fitFcn->FixParameter(0,parBG[0]);
+    fitFcn->FixParameter(1,parBG[1]);
+    fitFcn->FixParameter(2,parBG[2]);
+    TH1D* hProfileInvMassXFirstFit = (TH1D*)hProfileInvMassX->Clone();
+    hProfileInvMassXFirstFit->Fit("fitFcn","WRL");
+    Double_t par[6];
+    fitFcn->GetParameters(par);
+    par[5] = TMath::Abs(par[5]); // sometimes sigma is negative
+    par[3] = par[3]*par[5]*TMath::Power(TMath::TwoPi(), 0.5)/(0.06/nMinvBins); // from initial guess of A to S
+    // Make fit once again with initial guess based on the previous fit (Stage 2)
+    TF1 *fitFcnRedefined = new TF1("fitFcn2",fitFunctionRedifined,-0.03, 0.03,6);
+    fitFcnRedefined->SetParameters(par);
+    fitFcnRedefined->FixParameter(0,parBG[0]);
+    fitFcnRedefined->FixParameter(1,parBG[1]);
+    fitFcnRedefined->FixParameter(2,parBG[2]);
+    fitFcnRedefined->SetNpx(1e5);
+    fitFcnRedefined->SetLineColor(kRed+1);
+    // Create canvas for fitted inv mass
+    TCanvas *c1 = new TCanvas(Form("InvMassFit_bin_%d_from_%d_to_%d_centr", i+1, leftCentr, rightCentr),"PtHist",10,10,1200,900);
+    c1->cd();
+    TFitResultPtr FitResult = hProfileInvMassX->Fit("fitFcn2","WRSL");
+    fitFcnRedefined->GetParameters(par);
+    // Bin subtraction method
+    Double_t signal[2] = {0, 0};
+    TH1D* hProfileInvMassXBinCounting = (TH1D*)hProfileInvMassX->Clone();
+    hProfileInvMassXBinCounting->GetXaxis()->SetRange(leftSideBin, rightSideBin);
+    const Double_t binwidth = hProfileInvMassXBinCounting->GetXaxis()->GetBinWidth(5);
+    Double_t totCounts = hProfileInvMassXBinCounting->Integral();
+    Double_t leftEdge = hProfileInvMassXBinCounting->GetXaxis()->GetBinLowEdge(leftSideBin);
+    Double_t rightEdge = hProfileInvMassXBinCounting->GetXaxis()->GetBinLowEdge(rightSideBin + 1);
+    Double_t bgCounts = fitFcnBG->Integral(leftEdge, rightEdge)/binwidth;
+    signal[0] =  totCounts - bgCounts;
+    signal[1] = TMath::Power(totCounts + bgCounts, 0.5); // error
+    //Double_t* signal = calcSignalBindSubtraction(hProfileInvMassX, leftSideBin, rightSideBin, par);
+    std::cout << "bin number: " << i+1 << " signal value: " << signal[0] << std::endl;
+    inHist->Fill((xPtBins[i] + xPtBins[i+1])/2., signal[0]);
+    inHist->SetBinError(i+1, signal[1]);
+    // Points for Gaussian mean evolution graph
+    mean[i] = par[4];
+    errMean[i] = FitResult->ParError(4);
+    // Points for Gaussian sigma evolution graph
+    sigma[i] = par[5];
+    errSigma[i] = FitResult->ParError(5);
+    // Points for signal graph
+    signalSubstr[i] = signal[0];
+    errSignalSubstr[i] = signal[1];
+    // Points for signal from fit
+    signal[i] = par[3];
+    errSignal[i] = FitResult->ParError(3);
+    // Points for chi square graph
+    chisq[i] = fitFcnRedefined->GetChisquare()/fitFcnRedefined->GetNDF();
+    // Addition of fitted signal and background curves to our canvas
+    TF1 *backFcn = new TF1("backFcn",background,-0.03,0.03,3);
+    TF1 *signalFcn = new TF1("signalFcn",GAUSSredifined,-0.03,0.03,3);
+    
+    signalFcn->SetNpx(1e4);
+    backFcn->SetParameters(par);
+    backFcn->SetLineStyle(2);
+    backFcn->SetLineColor(kCyan+2); //{kBlack, kRed+1 , kBlue+1, kGreen+3, kMagenta+1, kOrange-1,kCyan+2,kYellow+2};
+    backFcn->Draw("same");
+
+    signalFcn->SetLineColor(kMagenta+1);
+    signalFcn->SetParameters(&par[3]);
+    signalFcn->Draw("same");
+
+    // Settings of Legend
+    TLegend *legend=new TLegend(0.6,0.65,0.88,0.85);
+    legend->SetTextFont(42);
+    legend->SetTextSize(0.03);
+    legend->SetLineColorAlpha(0.,0.);
+    legend->SetFillColorAlpha(0.,0.);
+    legend->SetBorderSize(0.);
+    legend->AddEntry(hProfileInvMassX,"Data (stat uncert.)","lpe");
+    legend->AddEntry(fitFcnRedefined,"fit (signal + bkg.)","l");
+    legend->AddEntry(backFcn,"estimated bkg. (pol2)","l");
+    legend->AddEntry(signalFcn,"estimated signal (Gauss)","l");
+    legend->Draw("same");
+
+    // Settings of latex label of pt range
+    TLatex ptRange;
+    ptRange.SetTextSize(0.03);
+    ptRange.SetTextFont(42);
+    ptRange.SetNDC();
+    ptRange.DrawLatex(0.155, 0.814, Form("%.2f GeV/#it{c} < #it{p}_{T} < %.2f GeV/#it{c}", xPtBins[i], xPtBins[i+1]));
+
+    // Settings of latex label of SqrtSnn
+    TLatex sqrtSnn;
+    sqrtSnn.SetTextSize(0.03);
+    sqrtSnn.SetTextFont(42);
+    sqrtSnn.SetNDC();
+    sqrtSnn.DrawLatex(0.155, 0.850, "ALICE pp #sqrt{#it{s}} = 13 TeV");
+
+    // Settings of latex label of OmegaLabel
+    TLatex omegaLabel;
+    omegaLabel.SetTextSize(0.0411899);
+    omegaLabel.SetTextFont(42);
+    omegaLabel.SetNDC();
+    omegaLabel.DrawLatex(0.1569, 0.574, "#Omega^{-}+#bar{#Omega}^{+}");
+
+    // Settings of stat box
+    gPad->Update(); // update to find 'stats' box
+    TPaveStats *st = (TPaveStats*)hProfileInvMassX->FindObject("stats");
+    //st->SetTextSize(0.03);
+    st->SetX1NDC(0.146);
+    st->SetX2NDC(0.363);
+    st->SetY1NDC(0.617);
+    st->SetY2NDC(0.801);
+    st->SetBorderSize(0);
+
+    // Write canvas of fitted inv mass distr
+    gROOT->SetBatch(kFALSE);
+    gPad->Update();
+    c1->Update();
+    c1->Write();
+  }
+  // Plot the Gaussian mean fit value evolution
+  gROOT->SetBatch(kTRUE);
+  TGraphErrors *MeanGaussFit = new TGraphErrors(7, bins, mean, errBins, errMean);
+  MeanGaussFit->SetTitle(Form("#mu of the Gaussain fit for %s from %d to %d mult", inHist3D->GetName(), leftCentr, rightCentr));
+  MeanGaussFit->GetXaxis()->SetTitle("Bin number");
+  MeanGaussFit->GetYaxis()->SetTitle("#mu");
+  MeanGaussFit->SetMarkerStyle(20);
+  TCanvas *c2 = new TCanvas(Form("#mu of the Gaussain fit for %s from %d to %d mult", inHist3D->GetName(), leftCentr, rightCentr),"PtHist",10,10,1200,900);
+  c2->cd();
+  MeanGaussFit->Draw("AP");
+  c2->Update();
+  gROOT->SetBatch(kFALSE);
+  c2->Write();
+  // Plot the Gaussian sigma fit value evolution
+  gROOT->SetBatch(kTRUE);
+  TGraphErrors *SigmaGaussFit = new TGraphErrors(7, bins, sigma, errBins, errSigma);
+  SigmaGaussFit->SetTitle(Form("#sigma of the Gaussain fit for %s from %d to %d mult", inHist3D->GetName(), leftCentr, rightCentr));
+  SigmaGaussFit->GetXaxis()->SetTitle("Bin number");
+  SigmaGaussFit->GetYaxis()->SetTitle("#sigma");
+  SigmaGaussFit->SetMarkerStyle(20);
+  TCanvas *c4 = new TCanvas(Form("#sigma of the Gaussain fit for %s from %d to %d mult", inHist3D->GetName(), leftCentr, rightCentr),"PtHist",10,10,1200,900);
+  c4->cd();
+  SigmaGaussFit->Draw("AP");
+  c4->Update();
+  gROOT->SetBatch(kFALSE);
+  c4->Write();
+  // Plot the signal evolution
+  gROOT->SetBatch(kTRUE);
+  TGraphErrors *NumberOfCascades = new TGraphErrors(7, bins, signal, errBins, errSignal);
+  NumberOfCascades->SetTitle(Form("Number_of_cascades_for_%s_from_%d_to_%d_mult", inHist3D->GetName(), leftCentr, rightCentr));
+  NumberOfCascades->GetXaxis()->SetTitle("Bin number");
+  NumberOfCascades->GetYaxis()->SetTitle("Number of cascades");
+  NumberOfCascades->SetMarkerStyle(20);
+  TCanvas *c3 = new TCanvas(Form("Number_of_cascades_for_%s_from_%d_to_%d_mult", inHist3D->GetName(), leftCentr, rightCentr),"PtHist",10,10,1200,900);
+  c3->cd();
+  NumberOfCascades->Draw("AP");
+  c3->Update();
+  gROOT->SetBatch(kFALSE);
+  c3->Write();
+  // Plot the chi square evolution
+  gROOT->SetBatch(kTRUE);
+  TGraphErrors *gChiSquare = new TGraphErrors(7, bins, chisq, errBins, errChisq);
+  gChiSquare->SetTitle(Form("Chi_sqaure_for_%s_from_%d_to_%d_mult", inHist3D->GetName(), leftCentr, rightCentr));
+  gChiSquare->GetXaxis()->SetTitle("Bin number");
+  gChiSquare->GetYaxis()->SetTitle("#chi^{2}/ndf");
+  gChiSquare->SetMarkerStyle(20);
+  TCanvas *c5 = new TCanvas(Form("Chi_sqaure_for_%s_from_%d_to_%d_mult", inHist3D->GetName(), leftCentr, rightCentr),"PtHist",10,10,1200,900);
+  c5->cd();
+  gChiSquare->Draw("AP");
+  c5->Update();
+  gROOT->SetBatch(kFALSE);
+  c5->Write();
+  // Plot the signal from bin subtraction with BG fit
+  gROOT->SetBatch(kTRUE);
+  TGraphErrors *NumberOfCascadesSubtr = new TGraphErrors(7, bins, signalSubstr, errBins, errSignalSubstr);
+  NumberOfCascadesSubtr->SetTitle(Form("Number_of_cascades_Subtr_for_%s_from_%d_to_%d_mult", inHist3D->GetName(), leftCentr, rightCentr));
+  NumberOfCascadesSubtr->GetXaxis()->SetTitle("Bin number");
+  NumberOfCascadesSubtr->GetYaxis()->SetTitle("Number of cascades");
+  NumberOfCascadesSubtr->SetMarkerStyle(20);
+  TCanvas *c6 = new TCanvas(Form("Number_of_cascades_Subtr_for_%s_from_%d_to_%d_mult", inHist3D->GetName(), leftCentr, rightCentr),"PtHist",10,10,1200,900);
+  c6->cd();
+  NumberOfCascadesSubtr->Draw("AP");
+  c6->Update();
+  gROOT->SetBatch(kFALSE);
+  c6->Write();
   // Go back to default dir in output file
   dir->cd("/");
 }
@@ -868,6 +1138,7 @@ void WriteToFile(TFile* outFile, Bool_t isMC = kFALSE){
   hOmegaMBdef->Write();
   hOmegaMBSideBand->Write();
   hOmegaMBBGfix->Write();
+  hOmegaMBCombined->Write();
   hOmegaHM->Write();
   hOmegaVHM->Write();
 
@@ -933,6 +1204,9 @@ void make_results(const Char_t* fileNameData, const Char_t* fileNameEff, const C
   hOmegaMBBGfix = new TH1D("hOmegaMBBGfix", "; #it{p}_{T} (GeV/c)", nPtBinsMB, xBinsMB);
   hOmegaMBBGfix->Sumw2();
 
+  hOmegaMBCombined = new TH1D("hOmegaMBCombined", "; #it{p}_{T} (GeV/c)", nPtBinsMB, xBinsMB);
+  hOmegaMBCombined->Sumw2();
+
   hOmegaMBMC = new TH1D("hOmegaMBMC", "; #it{p}_{T} (GeV/c)", nPtBinsMB, xBinsMB);
   hOmegaMBMC->Sumw2();
 
@@ -945,11 +1219,12 @@ void make_results(const Char_t* fileNameData, const Char_t* fileNameEff, const C
   // Create output file
   outFile = new TFile(outputFileName, "RECREATE");
   // Extract the signal from 3d inv mass hist
-  SignalExtractionPtSideBand(xBinsMB, nPtBinsMB, hInvMassSum, 1, 11, hOmegaMBSideBand, outFile); // 1 - 11 means 0 - 100 %
+  //SignalExtractionPtSideBand(xBinsMB, nPtBinsMB, hInvMassSum, 1, 11, hOmegaMBSideBand, outFile); // 1 - 11 means 0 - 100 %
   SignalExtractionPtFixedBG(xBinsMB, nPtBinsMB, hInvMassSum, 1, 11, hOmegaMBBGfix, outFile); // 1 - 11 means 0 - 100 %
-  SignalExtractionPtDef(xBinsMB, nPtBinsMB, hInvMassSum, 1, 11, hOmegaMBdef, outFile); // 1 - 11 means 0 - 100 %
-  SignalExtractionPtDef(xBinsHM, nPtBinsHM, hInvMassSum, 1, 3, hOmegaHM, outFile); // 1 - 3 means 0 - 10 %
-  SignalExtractionPtDef(xBinsHM, nPtBinsHM, hInvMassSum, 1, 1, hOmegaVHM, outFile); // 1 - 1 means 0 - 1 %
+  //SignalExtractionPtDef(xBinsMB, nPtBinsMB, hInvMassSum, 1, 11, hOmegaMBdef, outFile); // 1 - 11 means 0 - 100 %
+  SignalExtractionCombined(xBinsMB, nPtBinsMB, hInvMassSum, 1, 11, hOmegaMBCombined, outFile); // 1 - 11 means 0 - 100 %
+  //SignalExtractionPtDef(xBinsHM, nPtBinsHM, hInvMassSum, 1, 3, hOmegaHM, outFile); // 1 - 3 means 0 - 10 %
+  //SignalExtractionPtDef(xBinsHM, nPtBinsHM, hInvMassSum, 1, 1, hOmegaVHM, outFile); // 1 - 1 means 0 - 1 %
 
   if(isMC){
     SignalMC(xBinsMB, nPtBinsMB, hInvMassSumMC, 1, 11, hOmegaMBMC, outFile); // 1 - 11 means 0 - 100 %
@@ -959,10 +1234,10 @@ void make_results(const Char_t* fileNameData, const Char_t* fileNameEff, const C
   TF1* fRap = new TF1("fRap", rap_correction, 0.0, 50.0, 2);
   fRap->SetParameters(0.8, massOmega);
 
-  const Int_t nSpectra = 5;
-  TH1D* hEff[nSpectra] = { hEffOmegaMB, hEffOmegaMB, hEffOmegaMB, hEffOmegaHM, hEffOmegaVHM };
-  TH1D* hRaw[nSpectra] = { hOmegaMBdef, hOmegaMBBGfix, hOmegaMBSideBand, hOmegaHM, hOmegaVHM };
-  TH1D* hGen[nSpectra] = { hGenOmegaMB, hGenOmegaMB, hGenOmegaMB,   hGenOmegaHM,    hGenOmegaVHM};
+  const Int_t nSpectra = 6;
+  TH1D* hEff[nSpectra] = { hEffOmegaMB, hEffOmegaMB, hEffOmegaMB, hEffOmegaMB, hEffOmegaHM, hEffOmegaVHM };
+  TH1D* hRaw[nSpectra] = { hOmegaMBdef, hOmegaMBBGfix, hOmegaMBSideBand, hOmegaMBCombined, hOmegaHM, hOmegaVHM };
+  TH1D* hGen[nSpectra] = { hGenOmegaMB, hGenOmegaMB, hGenOmegaMB, hGenOmegaMB, hGenOmegaHM,    hGenOmegaVHM};
 
   // Normalize results
   TH1D* hNorm = (TH1D*)fileData->Get("hNorm");
@@ -974,6 +1249,7 @@ void make_results(const Char_t* fileNameData, const Char_t* fileNameEff, const C
     hOmegaMBdef->Scale(1.0/nMB);
     hOmegaMBBGfix->Scale(1.0/nMB);
     hOmegaMBSideBand->Scale(1.0/nMB);
+    hOmegaMBCombined->Scale(1.0/nMB);
     if(isMC)
       hGenOmegaMB->Scale(1.0/nMB);
   }
@@ -998,7 +1274,7 @@ void make_results(const Char_t* fileNameData, const Char_t* fileNameEff, const C
     hRaw[i]->Divide(fRap);
     hRaw[i]->GetYaxis()->SetTitle("(#Omega^{-}+#bar{#Omega}^{+}):  1/#it{N}_{inel}d^{2}#it{N}/d#it{p}_{T}d#it{y} ((GeV/#it{c})^{-1})");
     if(isMC){
-      if (i == 0 || i > 2){
+      if (i == 0 || i > 3){
         NormalizeHistogram(hGen[i]);
         hGen[i]->Divide(fRap);
         hGen[i]->GetYaxis()->SetTitle("(#Omega^{-}+#bar{#Omega}^{+}): 1/#it{N}_{inel}d^{2}#it{N}/d#it{p}_{T}d#it{y} ((GeV/#it{c})^{-1})");

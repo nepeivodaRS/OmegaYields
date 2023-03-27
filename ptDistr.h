@@ -50,6 +50,7 @@ TFile* fileEff;
 TH1D* hOmegaMBdef;
 TH1D* hOmegaMBSideBand;
 TH1D* hOmegaMBBGfix;
+TH1D* hOmegaMBCombined;
 
 TH1D* hOmegaMBMC;
 TH1D* hOmegaHM;
