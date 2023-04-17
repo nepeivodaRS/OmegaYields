@@ -319,8 +319,8 @@ Bool_t CheckCascStandardCuts(AliAnalysisPIDCascade* cascade) {
 //     bachDCA < 0.04 ||
 //     cascade->GetCascRadius()/cascade->GetPtCasc() > 15 ||
 //     v0->GetRadius()/cascade->GetPtCasc() > 40) // ||
-//     //cascade->GetCascDCAPV() > 1.0 || //  OMEGA TO PV DCA .. value?
-//     //cascade->GetV0DCA() > 10) // OMEGA to V0 ... value?
+//     //cascade->GetCascDCAPV() > 1.0 || //  OMEGA TO PV DCA .. value? (all signal < 3)
+//     //cascade->GetV0DCA() > 10) // OMEGA to V0 ... value? DCAv0Bach
 //     return kFALSE;
 //   return kTRUE;
 // }

@@ -3,8 +3,8 @@
 /*
   .L ptDistr.C
 
-  make_results("./outputAnal/data_2march_effCorr.root", "./outputEff/mc_Eff_2march_injected.root", "./outputPtHists/PtHist_15march_data.root", 0)
-  make_results("./outputAnal/mc_2march_effCorr.root", "./outputEff/mc_Eff_2march_injected.root", "./outputPtHists/PtHist_2march_mc.root", 1)
+  make_results("./outputAnal/data_6april_effCorr.root", "./outputEff/mc_Eff_6april_injected.root", "./outputPtHists/PtHist_6april_data.root", 0)
+  make_results("./outputAnal/mc_6april_effCorr.root", "./outputEff/mc_Eff_6april_injected.root", "./outputPtHists/PtHist_6april_mc.root", 1)
 
   make_results("./outputAnal/data_24Feb.root", "./outputEff/mc_Eff_28Feb_good_binning_injected.root", "./outputPtHists/PtHist_24feb_data_injEff.root", 0)
   make_results("./outputAnal/mc_24feb.root", "./outputEff/mc_Eff_28Feb_good_binning_injected.root", "./outputPtHists/PtHist_24feb_mc_injEff.root", 1)
@@ -590,6 +590,9 @@ void SignalExtractionPtFixedBG(const Double_t *xPtBins, const Int_t nPtBins, con
   dir->cd("/");
 }
 
+void SignalMCclosureBG(const Double_t *xPtBins, const Int_t nPtBins, const TH3D *inHist3D, Int_t leftCentr, Int_t rightCentr, TH1D* inHist, TFile* outFile){
+  }
+
 void SignalExtractionCombined(const Double_t *xPtBins, const Int_t nPtBins, const TH3D *inHist3D, Int_t leftCentr, Int_t rightCentr, TH1D* inHist, TFile* outFile){
   // Set stat box to show only mean and number of entries
   gStyle->SetOptStat("me");
@@ -604,9 +607,9 @@ void SignalExtractionCombined(const Double_t *xPtBins, const Int_t nPtBins, cons
   double errSigma[7] = {0};
   double errChisq[7] = {0};
   // Setup for Signal graph
-  double signal[7] = {0};
+  double signalGr[7] = {0};
   double signalSubstr[7] = {0};
-  double errSignal[7] = {0};
+  double errSignalGr[7] = {0};
   double errSignalSubstr[7] = {0};
   // Create dir to store all the fitted hists in centrality region from 'leftCentr' to 'rightCentr' bin
   TDirectory* dir = outFile->mkdir(Form("CombinedPtFitHists_%s_from_%d_to_%d_centr", inHist3D->GetName(), leftCentr, rightCentr));
@@ -660,59 +663,67 @@ void SignalExtractionCombined(const Double_t *xPtBins, const Int_t nPtBins, cons
     par[5] = TMath::Abs(par[5]); // sometimes sigma is negative
     par[3] = par[3]*par[5]*TMath::Power(TMath::TwoPi(), 0.5)/(0.06/nMinvBins); // from initial guess of A to S
     // Make fit once again with initial guess based on the previous fit (Stage 2)
-    TF1 *fitFcnRedefined = new TF1("fitFcn2",fitFunctionRedifined,-0.03, 0.03,6);
-    fitFcnRedefined->SetParameters(par);
-    fitFcnRedefined->FixParameter(0,parBG[0]);
-    fitFcnRedefined->FixParameter(1,parBG[1]);
-    fitFcnRedefined->FixParameter(2,parBG[2]);
-    fitFcnRedefined->SetNpx(1e5);
-    fitFcnRedefined->SetLineColor(kRed+1);
+    TF1 *fitFcn2 = new TF1("fitFcn2",fitFunctionRedifined,-0.03, 0.03,6);
+    fitFcn2->SetParameters(par);
+    fitFcn2->FixParameter(0,parBG[0]);
+    fitFcn2->FixParameter(1,parBG[1]);
+    fitFcn2->FixParameter(2,parBG[2]);
+    fitFcn2->SetNpx(1e5);
+    fitFcn2->SetLineColor(kRed+1);
     // Create canvas for fitted inv mass
     TCanvas *c1 = new TCanvas(Form("InvMassFit_bin_%d_from_%d_to_%d_centr", i+1, leftCentr, rightCentr),"PtHist",10,10,1200,900);
     c1->cd();
+    Double_t parFinal[6];
+    fitFcn2->GetParameters(parFinal);
+    std::cout << parFinal[0] << std::endl;
     TFitResultPtr FitResult = hProfileInvMassX->Fit("fitFcn2","WRSL");
-    fitFcnRedefined->GetParameters(par);
+    fitFcn2->GetParameters(parFinal);
+    std::cout << parFinal[0] << std::endl;
     // Bin subtraction method
     Double_t signal[2] = {0, 0};
     TH1D* hProfileInvMassXBinCounting = (TH1D*)hProfileInvMassX->Clone();
+    leftSideBin = hProfileInvMassBG->FindBin(-5*parFinal[5]); // use 5 sigma for signal region
+    rightSideBin = hProfileInvMassBG->FindBin(5*parFinal[5]);
     hProfileInvMassXBinCounting->GetXaxis()->SetRange(leftSideBin, rightSideBin);
     const Double_t binwidth = hProfileInvMassXBinCounting->GetXaxis()->GetBinWidth(5);
     Double_t totCounts = hProfileInvMassXBinCounting->Integral();
     Double_t leftEdge = hProfileInvMassXBinCounting->GetXaxis()->GetBinLowEdge(leftSideBin);
     Double_t rightEdge = hProfileInvMassXBinCounting->GetXaxis()->GetBinLowEdge(rightSideBin + 1);
     Double_t bgCounts = fitFcnBG->Integral(leftEdge, rightEdge)/binwidth;
-    signal[0] =  totCounts - bgCounts;
+    signal[0] = totCounts - bgCounts;
     signal[1] = TMath::Power(totCounts + bgCounts, 0.5); // error
-    //Double_t* signal = calcSignalBindSubtraction(hProfileInvMassX, leftSideBin, rightSideBin, par);
     std::cout << "bin number: " << i+1 << " signal value: " << signal[0] << std::endl;
     inHist->Fill((xPtBins[i] + xPtBins[i+1])/2., signal[0]);
     inHist->SetBinError(i+1, signal[1]);
     // Points for Gaussian mean evolution graph
-    mean[i] = par[4];
+    mean[i] = parFinal[4];
     errMean[i] = FitResult->ParError(4);
     // Points for Gaussian sigma evolution graph
-    sigma[i] = par[5];
+    sigma[i] = parFinal[5];
     errSigma[i] = FitResult->ParError(5);
     // Points for signal graph
     signalSubstr[i] = signal[0];
     errSignalSubstr[i] = signal[1];
     // Points for signal from fit
-    signal[i] = par[3];
-    errSignal[i] = FitResult->ParError(3);
+    std::cout << parFinal[0] << std::endl;
+    signalGr[i] = parFinal[3];
+    errSignalGr[i] = FitResult->ParError(3);
+    std::cout << parFinal[0] << std::endl;
     // Points for chi square graph
-    chisq[i] = fitFcnRedefined->GetChisquare()/fitFcnRedefined->GetNDF();
+    chisq[i] = fitFcn2->GetChisquare()/fitFcn2->GetNDF();
     // Addition of fitted signal and background curves to our canvas
     TF1 *backFcn = new TF1("backFcn",background,-0.03,0.03,3);
     TF1 *signalFcn = new TF1("signalFcn",GAUSSredifined,-0.03,0.03,3);
     
-    signalFcn->SetNpx(1e4);
-    backFcn->SetParameters(par);
+    std::cout << parFinal[0] << " " << parFinal[1] << " " << parFinal[2] << " " << parFinal[3] << std::endl;
+    backFcn->SetParameters(parFinal);
     backFcn->SetLineStyle(2);
     backFcn->SetLineColor(kCyan+2); //{kBlack, kRed+1 , kBlue+1, kGreen+3, kMagenta+1, kOrange-1,kCyan+2,kYellow+2};
     backFcn->Draw("same");
 
+    signalFcn->SetNpx(1e4);
     signalFcn->SetLineColor(kMagenta+1);
-    signalFcn->SetParameters(&par[3]);
+    signalFcn->SetParameters(&parFinal[3]);
     signalFcn->Draw("same");
 
     // Settings of Legend
@@ -723,7 +734,7 @@ void SignalExtractionCombined(const Double_t *xPtBins, const Int_t nPtBins, cons
     legend->SetFillColorAlpha(0.,0.);
     legend->SetBorderSize(0.);
     legend->AddEntry(hProfileInvMassX,"Data (stat uncert.)","lpe");
-    legend->AddEntry(fitFcnRedefined,"fit (signal + bkg.)","l");
+    legend->AddEntry(fitFcn2,"fit (signal + bkg.)","l");
     legend->AddEntry(backFcn,"estimated bkg. (pol2)","l");
     legend->AddEntry(signalFcn,"estimated signal (Gauss)","l");
     legend->Draw("same");
@@ -764,6 +775,15 @@ void SignalExtractionCombined(const Double_t *xPtBins, const Int_t nPtBins, cons
     gPad->Update();
     c1->Update();
     c1->Write();
+    //delete cBG;
+    // delete fitFcnBG;
+    // delete fitFcn;
+    // delete fitFcnRedefined;
+    // delete c1;
+    // delete cBG;
+    // delete backFcn;
+    // delete signalFcn;
+    // delete legend;
   }
   // Plot the Gaussian mean fit value evolution
   gROOT->SetBatch(kTRUE);
@@ -793,7 +813,7 @@ void SignalExtractionCombined(const Double_t *xPtBins, const Int_t nPtBins, cons
   c4->Write();
   // Plot the signal evolution
   gROOT->SetBatch(kTRUE);
-  TGraphErrors *NumberOfCascades = new TGraphErrors(7, bins, signal, errBins, errSignal);
+  TGraphErrors *NumberOfCascades = new TGraphErrors(7, bins, signalGr, errBins, errSignalGr);
   NumberOfCascades->SetTitle(Form("Number_of_cascades_for_%s_from_%d_to_%d_mult", inHist3D->GetName(), leftCentr, rightCentr));
   NumberOfCascades->GetXaxis()->SetTitle("Bin number");
   NumberOfCascades->GetYaxis()->SetTitle("Number of cascades");
@@ -1158,7 +1178,7 @@ void WriteToFile(TFile* outFile, Bool_t isMC = kFALSE){
   hEffOmegaHM->Write();
   hEffOmegaVHM->Write();
 
-  //outFile->Close(); // convinient not to close
+  outFile->Close(); // convinient not to close
 }
 
 void make_results(const Char_t* fileNameData, const Char_t* fileNameEff, const Char_t* outputFileName, Bool_t isMC = kFALSE){
@@ -1220,7 +1240,7 @@ void make_results(const Char_t* fileNameData, const Char_t* fileNameEff, const C
   outFile = new TFile(outputFileName, "RECREATE");
   // Extract the signal from 3d inv mass hist
   //SignalExtractionPtSideBand(xBinsMB, nPtBinsMB, hInvMassSum, 1, 11, hOmegaMBSideBand, outFile); // 1 - 11 means 0 - 100 %
-  SignalExtractionPtFixedBG(xBinsMB, nPtBinsMB, hInvMassSum, 1, 11, hOmegaMBBGfix, outFile); // 1 - 11 means 0 - 100 %
+  //SignalExtractionPtFixedBG(xBinsMB, nPtBinsMB, hInvMassSum, 1, 11, hOmegaMBBGfix, outFile); // 1 - 11 means 0 - 100 %
   //SignalExtractionPtDef(xBinsMB, nPtBinsMB, hInvMassSum, 1, 11, hOmegaMBdef, outFile); // 1 - 11 means 0 - 100 %
   SignalExtractionCombined(xBinsMB, nPtBinsMB, hInvMassSum, 1, 11, hOmegaMBCombined, outFile); // 1 - 11 means 0 - 100 %
   //SignalExtractionPtDef(xBinsHM, nPtBinsHM, hInvMassSum, 1, 3, hOmegaHM, outFile); // 1 - 3 means 0 - 10 %
@@ -1272,11 +1292,13 @@ void make_results(const Char_t* fileNameData, const Char_t* fileNameEff, const C
     //hRaw[i]->Divide(hEff[i]);
     // Apply rapidity correction
     hRaw[i]->Divide(fRap);
+    //hRaw[i]->Scale(1./0.7448); // ALICE visible cross section correction
     hRaw[i]->GetYaxis()->SetTitle("(#Omega^{-}+#bar{#Omega}^{+}):  1/#it{N}_{inel}d^{2}#it{N}/d#it{p}_{T}d#it{y} ((GeV/#it{c})^{-1})");
     if(isMC){
       if (i == 0 || i > 3){
         NormalizeHistogram(hGen[i]);
         hGen[i]->Divide(fRap);
+        //hGen[i]->Scale(1./0.7448); // ALICE visible cross section correction
         hGen[i]->GetYaxis()->SetTitle("(#Omega^{-}+#bar{#Omega}^{+}): 1/#it{N}_{inel}d^{2}#it{N}/d#it{p}_{T}d#it{y} ((GeV/#it{c})^{-1})");
       }
       CreateRatioPlotMcClosure(hRaw[i], hGen[i], outFile);

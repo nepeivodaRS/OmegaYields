@@ -8,7 +8,7 @@
 
   .L analyze_cuts.C+
 
-  analyze_cuts("./outputTreesMC/data_tree_all.dat.dat", "./outputCuts/mc_cuts_7feb.root", 0, 1)
+  analyze_cuts("./outputTreesMC/mc_tree_all.dat", "./outputCuts/mc_cuts_7feb.root", 0, 1)
 */
 void FillCutHists(Int_t SigType, AliAnalysisPIDCascade* cascade, AliAnalysisPIDCascadeEvent* event){
   // Fill CutList hists with signals of specific type
@@ -343,7 +343,6 @@ void analyze_cuts(const Char_t* inFileName,
         continue;
 
       hCascStat->Fill("Fast signal", 1);
-
 
       FillCutHists(2, cascade, event);
       if(isMC){

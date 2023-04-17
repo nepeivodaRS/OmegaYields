@@ -3,7 +3,8 @@
 /*
   .L closureAndDiffRecComp.C
 
-  closure_inv_mass("./outputPtHists/PtHist_2march_data.root", "/Users/rnepeiv/workLund/PhD_work/OmegaYields/published_data/correctedspectrumfittedgfcorrphyseff_spectra23.root", "./outputClosure/SignalClosure_16march_data.root", 0)
+  closure_inv_mass("./outputPtHists/PtHist_6april_data.root", "/Users/rnepeiv/workLund/PhD_work/OmegaYields/published_data/correctedspectrumfittedgfcorrphyseff_spectra23.root", "./outputClosure/SignalClosure_6april_data.root", 0)
+  closure_inv_mass("./outputPtHists/PtHist_6april_mc.root", "/Users/rnepeiv/workLund/PhD_work/OmegaYields/published_data/correctedspectrumfittedgfcorrphyseff_spectra23.root", "./outputClosure/SignalClosure_6april_mc.root", 1)
   
  */
 TFile* FindFileFresh(const Char_t* fileName)
@@ -211,15 +212,18 @@ void closure_inv_mass(const Char_t* fileNameData, const Char_t* publishedData, c
     // Search for dir with specific rec method
     //f->cd("DefPtFitHists_hOmegaInvMassVsPt_Omega_from_1_to_11_centr");
     //f->cd("FixedBGPtFitHists_hOmegaInvMassVsPt_Omega_from_1_to_11_centr");
-    f->cd("SideBandPtFitHists_hOmegaInvMassVsPt_Omega_from_1_to_11_centr");
+    f->cd("CombinedPtFitHists_hOmegaInvMassVsPt_Omega_from_1_to_11_centr");
 
     // Get canvas of number of rec cascades
-    cRecNumberOfCasc = findCanvas(gDirectory, "Number_of_cascades_for_hOmegaInvMassVsPt_Omega_from_1_to_11_mult");
+    cRecNumberOfCasc = findCanvas(gDirectory, "Number_of_cascades_Subtr_for_hOmegaInvMassVsPt_Omega_from_1_to_11_mult");
     //cRecNumberOfCasc->ls();
     //cRecNumberOfCasc->Draw();
     // Get canvas of number of gen cascades
     f->cd("PtFitHists_hOmegaInvMassVsPtTrueEffCorr_Omega_from_1_to_11_centr");
     cGenNumberOfcasc = findCanvas(gDirectory, "Number_of_cascades_for_hOmegaInvMassVsPtTrueEffCorr_Omega_from_1_to_11_mult");
+
+    // f->cd("CombinedPtFitHists_hOmegaInvMassVsPt_Omega_from_1_to_11_centr");
+    // cGenNumberOfcasc = findCanvas(gDirectory, "Number_of_cascades_for_hOmegaInvMassVsPt_Omega_from_1_to_11_mult");
 
     // Get graphs from canvases
     //std::cout << (TGraphErrors*)canvas1->GetListOfPrimitives() << std::endl;
@@ -234,12 +238,15 @@ void closure_inv_mass(const Char_t* fileNameData, const Char_t* publishedData, c
   hOmegaMBdef = (TH1D*)f->Get("PtHists/hOmegaMBdef");
   hOmegaMBSideBand = (TH1D*)f->Get("PtHists/hOmegaMBSideBand");
   hOmegaMBBGfix = (TH1D*)f->Get("PtHists/hOmegaMBBGfix");
+  hOmegaMBCombined = (TH1D*)f->Get("PtHists/hOmegaMBCombined");
 
   hOmegaMBPublished = (TH1D*)publishedFile->Get("hptcorr_norm_5");
   //hOmegaMBdef->Draw();
   createRatioPlotDiffRecMethods(hOmegaMBdef, hOmegaMBSideBand, outFile, "DefToSideBand", "Def", "SideBand");
   createRatioPlotDiffRecMethods(hOmegaMBdef, hOmegaMBBGfix, outFile, "DefToFixBG", "Def", "FixBG");
   createRatioPlotDiffRecMethods(hOmegaMBSideBand, hOmegaMBBGfix, outFile, "SideBandToFixBG", "SideBand", "FixBG");
+
+  createRatioPlotDiffRecMethods(hOmegaMBCombined, hOmegaMBPublished, outFile, "CombinedToPublished", "This", "Publ.");
 
   createRatioPlotDiffRecMethods(hOmegaMBBGfix, hOmegaMBPublished, outFile, "FixBGToPublished", "FixBG", "Publ.");
   createRatioPlotDiffRecMethods(hOmegaMBdef, hOmegaMBPublished, outFile, "DefToPublished", "Def", "Publ.");

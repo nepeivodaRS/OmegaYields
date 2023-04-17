@@ -71,8 +71,12 @@ void InitHists(){
             nPtBinsMB, xBinsMB, nMinvBins, minvBins, nCentrBins, xCentrBins);
     hOmegaInvMassVsPtTrue[i]->Sumw2();
 
+    hOmegaInvMassVsPtBG[i] = new TH3D(Form("hOmegaInvMassVsPtBG_%s", pdgNameOmega[i]), "M_{inv} vs p_{T}; p_{T}^{casc} [GeV/c]; M_{inv} - M_{#Omega} [GeV/c^{2}]; Centrality V0M",
+            nPtBinsMB, xBinsMB, nMinvBins, minvBins, nCentrBins, xCentrBins);
+    hOmegaInvMassVsPtBG[i]->Sumw2();
+
     InvMassList->Add(hOmegaInvMassVsPt[i]);
-    InvMassList->Add(hOmegaInvMassVsPtTrue[i]);
+    InvMassList->Add(hOmegaInvMassVsPtBG[i]);
   }
 
   hEventStat = new TH1I("hEventStat","",3,0,3);
@@ -229,14 +233,19 @@ void analyze_tree(const Char_t* inFileName,
         hCascStat->Fill("Standard", 1);
         Int_t bin = 1;
         if(cascade->GetCharge() < 0){bin = 0;}
-          hOmegaInvMassVsPt[bin]->Fill(cascade->GetPtCasc(), dMassOmega, event->GetV0Mmultiplicity());
+        hOmegaInvMassVsPt[bin]->Fill(cascade->GetPtCasc(), dMassOmega, event->GetV0Mmultiplicity());
         hOmegaInconsistencyXi->Fill(dMassXi, dMassOmega);
         // MC closure for signal inside reconstructed
         if(isMC){
           if(IsRealOmegaCascade(cascade)){
             if(cascade->GetCharge() < 0){bin = 0;}
               hOmegaInvMassVsPtTrue[bin]->Fill(cascade->GetPtCasc(), dMassOmega, event->GetV0Mmultiplicity());                  
-          } 
+          }
+          else
+          {
+            if(cascade->GetCharge() < 0){bin = 0;}
+              hOmegaInvMassVsPtBG[bin]->Fill(cascade->GetPtCasc(), dMassOmega, event->GetV0Mmultiplicity()); 
+          }
         }
       }
 
