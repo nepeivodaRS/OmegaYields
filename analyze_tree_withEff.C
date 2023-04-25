@@ -227,11 +227,11 @@ void analyze_tree_withEff(const Char_t* inFileName,
 
       hCascStat->Fill("Fast signal", 1);
 
-      bPassedLoose = CheckCascLooseCuts(cascade);
-      if(!bPassedLoose)
-        continue;
+      // bPassedLoose = CheckCascLooseCuts(cascade);
+      // if(!bPassedLoose)
+      //   continue;
 
-      hCascStat->Fill("Loose", 1);
+      // hCascStat->Fill("Loose", 1);
 
       bPassedStandard = CheckCascStandardCuts(cascade);
       if(bPassedStandard){
@@ -252,10 +252,10 @@ void analyze_tree_withEff(const Char_t* inFileName,
         }
       }
 
-      bPassedTight = CheckCascTightCuts(cascade);
-      if(bPassedTight){
-        hCascStat->Fill("Tight", 1);
-      }
+      // bPassedTight = CheckCascTightCuts(cascade);
+      // if(bPassedTight){
+      //   hCascStat->Fill("Tight", 1);
+      // }
     }
   }
 

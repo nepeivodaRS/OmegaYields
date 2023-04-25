@@ -590,9 +590,6 @@ void SignalExtractionPtFixedBG(const Double_t *xPtBins, const Int_t nPtBins, con
   dir->cd("/");
 }
 
-void SignalMCclosureBG(const Double_t *xPtBins, const Int_t nPtBins, const TH3D *inHist3D, Int_t leftCentr, Int_t rightCentr, TH1D* inHist, TFile* outFile){
-  }
-
 void SignalExtractionCombined(const Double_t *xPtBins, const Int_t nPtBins, const TH3D *inHist3D, Int_t leftCentr, Int_t rightCentr, TH1D* inHist, TFile* outFile){
   // Set stat box to show only mean and number of entries
   gStyle->SetOptStat("me");
