@@ -69,13 +69,23 @@ void InitHists(){
             nPtBinsMB, xBinsMB, nMinvBins, minvBins, nCentrBins, xCentrBins);
     hOmegaInvMassVsPtTrue[i]->Sumw2();
 
+    hOmegaInvMassVsPtBG[i] = new TH3D(Form("hOmegaInvMassVsPtBG_%s", pdgNameOmega[i]), "M_{inv} vs p_{T}; p_{T}^{casc} [GeV/c]; M_{inv} - M_{#Omega} [GeV/c^{2}]; Centrality V0M",
+            nPtBinsMB, xBinsMB, nMinvBins, minvBins, nCentrBins, xCentrBins);
+    hOmegaInvMassVsPtBG[i]->Sumw2();
+
     hOmegaInvMassVsPtTrueEffCorr[i] = new TH3D(Form("hOmegaInvMassVsPtTrueEffCorr_%s", pdgNameOmega[i]), "M_{inv} vs p_{T}; p_{T}^{casc} [GeV/c]; M_{inv} - M_{#Omega} [GeV/c^{2}]; Centrality V0M",
             nPtBinsMB, xBinsMB, nMinvBins, minvBins, nCentrBins, xCentrBins);
     hOmegaInvMassVsPtTrueEffCorr[i]->Sumw2();
 
+    hOmegaInvMassVsPtBGEffCorr[i] = new TH3D(Form("hOmegaInvMassVsPtBGEffCorr_%s", pdgNameOmega[i]), "M_{inv} vs p_{T}; p_{T}^{casc} [GeV/c]; M_{inv} - M_{#Omega} [GeV/c^{2}]; Centrality V0M",
+            nPtBinsMB, xBinsMB, nMinvBins, minvBins, nCentrBins, xCentrBins);
+    hOmegaInvMassVsPtBGEffCorr[i]->Sumw2();
+
     InvMassList->Add(hOmegaInvMassVsPt[i]);
     InvMassList->Add(hOmegaInvMassVsPtTrue[i]);
+    InvMassList->Add(hOmegaInvMassVsPtBG[i]);
     InvMassList->Add(hOmegaInvMassVsPtTrueEffCorr[i]);
+    InvMassList->Add(hOmegaInvMassVsPtBGEffCorr[i]);
   }
 
   hEventStat = new TH1I("hEventStat","",3,0,3);
@@ -238,17 +248,20 @@ void analyze_tree_withEff(const Char_t* inFileName,
         hCascStat->Fill("Standard", 1);
         Int_t bin = 1;
         Int_t EffBin = hEffOmegaMB->GetXaxis()->FindBin(cascade->GetPtCasc());
-        if(cascade->GetCharge() < 0){bin = 0;}{
-          hOmegaInvMassVsPt[bin]->Fill(cascade->GetPtCasc(), dMassOmega, event->GetV0Mmultiplicity(), 1./hEffOmegaMB->GetBinContent(EffBin));
-        }
+        if(cascade->GetCharge() < 0){bin = 0;}
+        hOmegaInvMassVsPt[bin]->Fill(cascade->GetPtCasc(), dMassOmega, event->GetV0Mmultiplicity(), 1./hEffOmegaMB->GetBinContent(EffBin));
         hOmegaInconsistencyXi->Fill(dMassXi, dMassOmega);
         // MC closure for signal inside reconstructed
         if(isMC){
           if(IsRealOmegaCascade(cascade)){
-            if(cascade->GetCharge() < 0){bin = 0;}
-              hOmegaInvMassVsPtTrue[bin]->Fill(cascade->GetPtCasc(), dMassOmega, event->GetV0Mmultiplicity());
-              hOmegaInvMassVsPtTrueEffCorr[bin]->Fill(cascade->GetPtCasc(), dMassOmega, event->GetV0Mmultiplicity(), 1./hEffOmegaMB->GetBinContent(EffBin));            
-          } 
+            hOmegaInvMassVsPtTrue[bin]->Fill(cascade->GetPtCasc(), dMassOmega, event->GetV0Mmultiplicity());
+            hOmegaInvMassVsPtTrueEffCorr[bin]->Fill(cascade->GetPtCasc(), dMassOmega, event->GetV0Mmultiplicity(), 1./hEffOmegaMB->GetBinContent(EffBin));     
+          }
+          else
+          {
+            hOmegaInvMassVsPtBG[bin]->Fill(cascade->GetPtCasc(), dMassOmega, event->GetV0Mmultiplicity());
+            hOmegaInvMassVsPtBGEffCorr[bin]->Fill(cascade->GetPtCasc(), dMassOmega, event->GetV0Mmultiplicity(), 1./hEffOmegaMB->GetBinContent(EffBin));
+          }
         }
       }
 
