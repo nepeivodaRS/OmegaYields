@@ -65,3 +65,4 @@ TH1D* hEffOmegaHM;
 TH1D* hEffOmegaVHM;
 
 TH3D* hInvMassSumMC;
+TH3D* hInvMassSumBGMC;

@@ -3,8 +3,8 @@
 /*
   .L ptDistr.C
 
-  make_results("./outputAnal/data_6april_effCorr.root", "./outputEff/mc_Eff_6april_injected.root", "./outputPtHists/PtHist_6april_data.root", 0)
-  make_results("./outputAnal/mc_6april_effCorr.root", "./outputEff/mc_Eff_6april_injected.root", "./outputPtHists/PtHist_6april_mc.root", 1)
+  make_results("./outputAnal/data_25april_effCorr.root", "./outputEff/mc_Eff_25april_injected.root", "./outputPtHists/PtHist_25april_data.root", 0)
+  make_results("./outputAnal/mc_25april_effCorr.root", "./outputEff/mc_Eff_25april_injected.root", "./outputPtHists/PtHist_25april_mc.root", 1)
 
   make_results("./outputAnal/data_24Feb.root", "./outputEff/mc_Eff_28Feb_good_binning_injected.root", "./outputPtHists/PtHist_24feb_data_injEff.root", 0)
   make_results("./outputAnal/mc_24feb.root", "./outputEff/mc_Eff_28Feb_good_binning_injected.root", "./outputPtHists/PtHist_24feb_mc_injEff.root", 1)
@@ -1041,16 +1041,87 @@ void SignalExtractionPtDef(const Double_t *xPtBins, const Int_t nPtBins, TH3D *i
   dir->cd("/");
 }
 
-void SignalMC(const Double_t *xPtBins, const Int_t nPtBins, TH3D *inHist3D, Int_t leftCentr, Int_t rightCentr, TH1D* inHist, TFile* outFile){
+void BGMC(const Double_t *xPtBins, const Int_t nPtBins, TH3D *inHist3D, Int_t leftCentr, Int_t rightCentr, TFile* outFile){
   // Set stat box to show only mean and number of entries
   gStyle->SetOptStat("me");
+  // Create dir to store all the BG hists in centrality region from 'leftCentr' to 'rightCentr' bin
+  TDirectory* dir = outFile->mkdir(Form("PtBGMCHists_%s_from_%d_to_%d_centr", inHist3D->GetName(), leftCentr, rightCentr));
+  dir->cd();  
+  // Clone hist not to change the original one
+  TH3D* invMassHist = (TH3D*)inHist3D->Clone();
+  invMassHist->GetZaxis()->SetRange(leftCentr, rightCentr);
+  invMassHist->Write();
+  TH2D* hProfileInvMassZ = static_cast<TH2D*>(invMassHist->Project3D("xy")); // doesn't work w/o static cast; projects in range that was set above
+  hProfileInvMassZ->Write();
+  // Loop over all PtBins and fit inv mass spectra
+  for(Int_t i = 0; i < nPtBins; ++i) {
+    gROOT->SetBatch(kTRUE);
+    TH1D* hProfileInvMassX = hProfileInvMassZ->ProjectionX("_px", hProfileInvMassZ->GetYaxis()->FindBin(xPtBins[i] + 0.00001), hProfileInvMassZ->GetYaxis()->FindBin(xPtBins[i+1]-0.00001));
+    hProfileInvMassX->SetTitle(Form("M_{inv} in pt bins fit, %d bin",  i+1));
+    hProfileInvMassX->SetXTitle("#it{M}_{inv} - #it{M}_{#Omega^{-} (#bar{#Omega}^{+})} [GeV/#it{c}^{2}]");
+
+    TCanvas *c1 = new TCanvas(Form("InvMass_bin_%d_from_%d_to_%d", i+1, leftCentr, rightCentr),"PtHist",10,10,1200,900);
+    c1->cd();
+    hProfileInvMassX->Draw();
+
+    // Settings of Legend
+    TLegend *legend=new TLegend(0.6,0.65,0.88,0.85);
+    legend->SetTextFont(42);
+    legend->SetTextSize(0.03);
+    legend->SetLineColorAlpha(0.,0.);
+    legend->SetFillColorAlpha(0.,0.);
+    legend->SetBorderSize(0.);
+    legend->AddEntry(hProfileInvMassX,"Real signal","lpe");
+    legend->Draw("same");
+
+    // Settings of latex label of pt range
+    TLatex ptRange;
+    ptRange.SetTextSize(0.03);
+    ptRange.SetTextFont(42);
+    ptRange.SetNDC();
+    ptRange.DrawLatex(0.155, 0.814, Form("%.2f GeV/#it{c} < #it{p}_{T} < %.2f GeV/#it{c}", xPtBins[i], xPtBins[i+1]));
+
+    // Settings of latex label of SqrtSnn
+    TLatex sqrtSnn;
+    sqrtSnn.SetTextSize(0.03);
+    sqrtSnn.SetTextFont(42);
+    sqrtSnn.SetNDC();
+    sqrtSnn.DrawLatex(0.155, 0.850, "ALICE pp #sqrt{#it{s}} = 13 TeV");
+
+    // Settings of latex label of OmegaLabel
+    TLatex omegaLabel;
+    omegaLabel.SetTextSize(0.0411899);
+    omegaLabel.SetTextFont(42);
+    omegaLabel.SetNDC();
+    omegaLabel.DrawLatex(0.1569, 0.574, "#Omega^{-}+#bar{#Omega}^{+}");
+
+    // Settings of stat box
+    gPad->Update(); // update to find 'stats' box
+    TPaveStats *st = (TPaveStats*)hProfileInvMassX->FindObject("stats");
+    //st->SetTextSize(0.03);
+    st->SetX1NDC(0.146);
+    st->SetX2NDC(0.363);
+    st->SetY1NDC(0.617);
+    st->SetY2NDC(0.801);
+    st->SetBorderSize(0);
+
+    // Write canvas of MC inv mass distr
+    gROOT->SetBatch(kFALSE);
+    gPad->Update();
+    c1->Update();
+    c1->Write();
+  }
+}
+
+void SignalMC(const Double_t *xPtBins, const Int_t nPtBins, TH3D *inHist3D, Int_t leftCentr, Int_t rightCentr, TH1D* inHist, TFile* outFile){
+
   // Setup for Signal graph
   double bins[7] = {1, 2, 3, 4, 5, 6, 7};
   double errBins[7] = {0};
   double signal[7] = {0};
   double errSignal[7] = {0};
   // Create dir to store all the fitted hists in centrality region from 'leftCentr' to 'rightCentr' bin
-  TDirectory* dir = outFile->mkdir(Form("PtFitHists_%s_from_%d_to_%d_centr", inHist3D->GetName(), leftCentr, rightCentr));
+  TDirectory* dir = outFile->mkdir(Form("PtSignalMCHists_%s_from_%d_to_%d_centr", inHist3D->GetName(), leftCentr, rightCentr));
   dir->cd();
   // Clone hist not to change the original one
   TH3D* invMassHist = (TH3D*)inHist3D->Clone();
@@ -1209,6 +1280,12 @@ void make_results(const Char_t* fileNameData, const Char_t* fileNameEff, const C
     hInvMassSumMC = (TH3D*)hInvMassOmegaMC->Clone();
     TH3D* histToAddMC  = (TH3D*)hInvMassOmegaBarMC->Clone();
     hInvMassSumMC->Add(histToAddMC);
+
+    TH3D* hInvMassOmegaBGMC = (TH3D*)ListOfHists->FindObject("hOmegaInvMassVsPtBGEffCorr_Omega");
+    TH3D* hInvMassOmegaBGBarMC = (TH3D*)ListOfHists->FindObject("hOmegaInvMassVsPtBGEffCorr_OmegaBar");
+    hInvMassSumBGMC = (TH3D*)hInvMassOmegaBGMC->Clone();
+    TH3D* histToAddBGMC  = (TH3D*)hInvMassOmegaBarMC->Clone();
+    hInvMassSumBGMC->Add(histToAddMC);
   }
 
   // Setup hists
@@ -1236,7 +1313,7 @@ void make_results(const Char_t* fileNameData, const Char_t* fileNameEff, const C
   // Create output file
   outFile = new TFile(outputFileName, "RECREATE");
   // Extract the signal from 3d inv mass hist
-  //SignalExtractionPtSideBand(xBinsMB, nPtBinsMB, hInvMassSum, 1, 11, hOmegaMBSideBand, outFile); // 1 - 11 means 0 - 100 %
+  SignalExtractionPtSideBand(xBinsMB, nPtBinsMB, hInvMassSum, 1, 11, hOmegaMBSideBand, outFile); // 1 - 11 means 0 - 100 %
   //SignalExtractionPtFixedBG(xBinsMB, nPtBinsMB, hInvMassSum, 1, 11, hOmegaMBBGfix, outFile); // 1 - 11 means 0 - 100 %
   //SignalExtractionPtDef(xBinsMB, nPtBinsMB, hInvMassSum, 1, 11, hOmegaMBdef, outFile); // 1 - 11 means 0 - 100 %
   SignalExtractionCombined(xBinsMB, nPtBinsMB, hInvMassSum, 1, 11, hOmegaMBCombined, outFile); // 1 - 11 means 0 - 100 %
@@ -1245,6 +1322,7 @@ void make_results(const Char_t* fileNameData, const Char_t* fileNameEff, const C
 
   if(isMC){
     SignalMC(xBinsMB, nPtBinsMB, hInvMassSumMC, 1, 11, hOmegaMBMC, outFile); // 1 - 11 means 0 - 100 %
+    BGMC(xBinsMB, nPtBinsMB, hInvMassSumBGMC, 1, 11, outFile); // 1 - 11 means 0 - 100 %
   }
 
   // Setup rapidity correction TF1

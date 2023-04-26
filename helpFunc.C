@@ -39,8 +39,8 @@ Bool_t IsRealOmegaCascade(AliAnalysisPIDCascade* cascade){
   const Int_t q = cascade->GetCharge();
 
   if(bachelor->GetMCPdgCode()    != q*321   || // K+
-  bachelor->GetMCMotherPdgCode() != q*-3334 || // Omega+
-  bachelor->GetMCMotherPrimary() != kTRUE)
+  bachelor->GetMCMotherPdgCode() != q*-3334) // || // Omega+
+  //bachelor->GetMCMotherPrimary() != kTRUE) // delete this and try to look at the bg
     return kFALSE;
 
   const Int_t omegaLabel = bachelor->GetMCMotherLabel();
