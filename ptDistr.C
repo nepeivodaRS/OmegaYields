@@ -1071,7 +1071,7 @@ void BGMC(const Double_t *xPtBins, const Int_t nPtBins, TH3D *inHist3D, Int_t le
     legend->SetLineColorAlpha(0.,0.);
     legend->SetFillColorAlpha(0.,0.);
     legend->SetBorderSize(0.);
-    legend->AddEntry(hProfileInvMassX,"Real signal","lpe");
+    legend->AddEntry(hProfileInvMassX,"Background","lpe");
     legend->Draw("same");
 
     // Settings of latex label of pt range
@@ -1284,8 +1284,8 @@ void make_results(const Char_t* fileNameData, const Char_t* fileNameEff, const C
     TH3D* hInvMassOmegaBGMC = (TH3D*)ListOfHists->FindObject("hOmegaInvMassVsPtBGEffCorr_Omega");
     TH3D* hInvMassOmegaBGBarMC = (TH3D*)ListOfHists->FindObject("hOmegaInvMassVsPtBGEffCorr_OmegaBar");
     hInvMassSumBGMC = (TH3D*)hInvMassOmegaBGMC->Clone();
-    TH3D* histToAddBGMC  = (TH3D*)hInvMassOmegaBarMC->Clone();
-    hInvMassSumBGMC->Add(histToAddMC);
+    TH3D* histToAddBGMC  = (TH3D*)hInvMassOmegaBGBarMC->Clone();
+    hInvMassSumBGMC->Add(histToAddBGMC);
   }
 
   // Setup hists
