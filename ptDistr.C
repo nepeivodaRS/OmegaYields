@@ -676,19 +676,39 @@ void SignalExtractionCombined(const Double_t *xPtBins, const Int_t nPtBins, cons
     TFitResultPtr FitResult = hProfileInvMassX->Fit("fitFcn2","WRSL");
     fitFcn2->GetParameters(parFinal);
     std::cout << parFinal[0] << std::endl;
-    // Bin subtraction method
+    // Second BG fitting
+    TF1 *fitFcnBG2 = new TF1("fitFcnBG2",background, -0.03, 0.03, 3); // parFinal[4] - 10*parFinal[5], parFinal[4] + 10*parFinal[5],3);
+    fitFcnBG2->SetParameters(parFinal[0],parFinal[1],parFinal[2]);
+    std::cout << "BG Before: " << parBG[0] << " " << parBG[1] << " " << parBG[2] << std::endl;
+    TH1D* hProfileInvMassBG2 = (TH1D*)hProfileInvMassX->Clone();
+    // Removal of points
+    leftSideBin = hProfileInvMassBG2->FindBin(parFinal[4] - 5*parFinal[5]);
+    rightSideBin = hProfileInvMassBG2->FindBin(parFinal[4] + 5*parFinal[5]);
+    for(Int_t i = leftSideBin; i <= rightSideBin; i++) { hProfileInvMassBG2->SetBinContent(i, 0); hProfileInvMassBG2->SetBinError(i, 0.0);}
+    TCanvas *cBG2 = new TCanvas(Form("InvMassFit_bin_%d_from_%d_to_%d_centr_BG2", i+1, leftCentr, rightCentr),"PtHistBG2",10,10,1200,900);
+    cBG2->cd();
+    TFitResultPtr FitBG2 = hProfileInvMassBG2->Fit(fitFcnBG2, "SQRW");
+    gROOT->SetBatch(kFALSE);
+    gPad->Update();
+    cBG2->Update();
+    cBG2->Write();
+    gROOT->SetBatch(kTRUE);
+    fitFcnBG2->GetParameters(parBG);
+    std::cout << "BG after: " << parBG[0] << " " << parBG[1] << " " << parBG[2] << std::endl;
+    c1->cd();
+    //Bin subtraction method
     Double_t signal[2] = {0, 0};
     TH1D* hProfileInvMassXBinCounting = (TH1D*)hProfileInvMassX->Clone();
-    leftSideBin = hProfileInvMassBG->FindBin(-5*parFinal[5]); // use 5 sigma for signal region
-    rightSideBin = hProfileInvMassBG->FindBin(5*parFinal[5]);
+    leftSideBin = hProfileInvMassBG->FindBin(parFinal[4] - 5*parFinal[5]); // use 5 sigma for signal region
+    rightSideBin = hProfileInvMassBG->FindBin(parFinal[4] + 5*parFinal[5]);
     hProfileInvMassXBinCounting->GetXaxis()->SetRange(leftSideBin, rightSideBin);
     const Double_t binwidth = hProfileInvMassXBinCounting->GetXaxis()->GetBinWidth(5);
     Double_t totCounts = hProfileInvMassXBinCounting->Integral();
     Double_t leftEdge = hProfileInvMassXBinCounting->GetXaxis()->GetBinLowEdge(leftSideBin);
     Double_t rightEdge = hProfileInvMassXBinCounting->GetXaxis()->GetBinLowEdge(rightSideBin + 1);
-    Double_t bgCounts = fitFcnBG->Integral(leftEdge, rightEdge)/binwidth;
+    Double_t bgCounts = fitFcnBG2->Integral(leftEdge, rightEdge)/binwidth;
     signal[0] = totCounts - bgCounts;
-    signal[1] = TMath::Power(totCounts + bgCounts, 0.5); // error
+    signal[1] = TMath::Power(totCounts + bgCounts, 0.5); // uncertainty
     std::cout << "bin number: " << i+1 << " signal value: " << signal[0] << std::endl;
     inHist->Fill((xPtBins[i] + xPtBins[i+1])/2., signal[0]);
     inHist->SetBinError(i+1, signal[1]);
@@ -848,6 +868,106 @@ void SignalExtractionCombined(const Double_t *xPtBins, const Int_t nPtBins, cons
   gROOT->SetBatch(kFALSE);
   c6->Write();
   // Go back to default dir in output file
+  dir->cd("/");
+}
+
+
+void SignalExtractionCombinedMC(const Double_t *xPtBins, const Int_t nPtBins, const TH3D *inHist3D, Int_t leftCentr, Int_t rightCentr, TH1D* inHist, TFile* outFile, const TH3D *inHist3DMC){
+  // Set stat box to show only mean and number of entries
+  gStyle->SetOptStat("me");
+  gStyle->SetOptFit(1);
+  // Create dir to store all the fitted hists in centrality region from 'leftCentr' to 'rightCentr' bin
+  TDirectory* dir = outFile->mkdir(Form("CombinedPtFitHistsWithMCBG_%s_from_%d_to_%d_centr", inHist3D->GetName(), leftCentr, rightCentr));
+  dir->cd();
+  // Clone hist not to change the original one
+  TH3D* invMassHist = (TH3D*)inHist3D->Clone();
+  invMassHist->GetZaxis()->SetRange(leftCentr, rightCentr);
+  invMassHist->Write();
+  TH2D* hProfileInvMassZ = static_cast<TH2D*>(invMassHist->Project3D("xy")); // doesn't work w/o static cast; projects in range that was set above
+  hProfileInvMassZ->Write();
+
+  // Clone hist not to change the original one
+  TH3D* invMassHistMC = (TH3D*)inHist3DMC->Clone();
+  invMassHistMC->GetZaxis()->SetRange(leftCentr, rightCentr);
+  invMassHistMC->Write();
+  TH2D* hProfileInvMassZMC = static_cast<TH2D*>(invMassHistMC->Project3D("xy")); // doesn't work w/o static cast; projects in range that was set above
+  hProfileInvMassZMC->Write();
+
+  double ratio[7] = {0};
+  double error[7] = {0};
+  double bins[7] = {1, 2, 3, 4, 5, 6, 7};
+  // Loop over all PtBins and fit inv mass spectra
+  for(Int_t i = 0; i < nPtBins; ++i) {
+    gROOT->SetBatch(kTRUE);
+    TH1D* hProfileInvMassX = hProfileInvMassZ->ProjectionX("_px", hProfileInvMassZ->GetYaxis()->FindBin(xPtBins[i] + 0.00001), hProfileInvMassZ->GetYaxis()->FindBin(xPtBins[i+1]-0.00001));
+    hProfileInvMassX->SetTitle(Form("M_{inv} in pt bins fit, %d bin",  i+1));
+    hProfileInvMassX->SetXTitle("#it{M}_{inv} - #it{M}_{#Omega^{-} (#bar{#Omega}^{+})} [GeV/#it{c}^{2}]");
+    hProfileInvMassX->SetYTitle("Counts");
+
+    TH1D* hProfileInvMassXMC = hProfileInvMassZMC->ProjectionX("_px", hProfileInvMassZMC->GetYaxis()->FindBin(xPtBins[i] + 0.00001), hProfileInvMassZMC->GetYaxis()->FindBin(xPtBins[i+1]-0.00001));
+    hProfileInvMassXMC->SetTitle(Form("M_{inv} in pt bins fit, %d bin",  i+1));
+    hProfileInvMassXMC->SetXTitle("#it{M}_{inv} - #it{M}_{#Omega^{-} (#bar{#Omega}^{+})} [GeV/#it{c}^{2}]");
+    hProfileInvMassXMC->SetYTitle("Counts");
+    // BG fitting
+    TCanvas *cBG = new TCanvas(Form("InvMassFit_bin_%d_from_%d_to_%d_centr_BG", i+1, leftCentr, rightCentr),"PtHistBG",10,10,1200,900);
+    cBG->cd();
+    Double_t sigPickApprox = hProfileInvMassX->GetBinContent(hProfileInvMassX->GetMaximumBin()); // 0 guess for the first fit
+    TH1D* hProfileInvMassBG = (TH1D*)hProfileInvMassX->Clone();
+    // Additional safe removal of points
+    Int_t leftSideBin = hProfileInvMassBG->FindBin(-0.01);
+    Int_t rightSideBin = hProfileInvMassBG->FindBin(0.01);
+    for(Int_t i = leftSideBin; i <= rightSideBin; i++) { hProfileInvMassBG->SetBinContent(i, 0); hProfileInvMassBG->SetBinError(i, 0.0);}
+    TF1 *fitFcnBG = new TF1("fitFcnBG",background,-0.03, 0.03,3);
+    fitFcnBG->SetParameters(1,1,1);
+    // fitFcnBG->SetParLimits(0, -10e6, 10e6);
+    // fitFcnBG->SetParLimits(1, -10e6, 10e6);
+    // fitFcnBG->SetParLimits(2, -10e6, 10e6);
+
+    TFitResultPtr FitBG = hProfileInvMassBG->Fit(fitFcnBG, "SQRW");
+    gROOT->SetBatch(kFALSE);
+    gPad->Update();
+    cBG->Update();
+    cBG->Write();
+    gROOT->SetBatch(kTRUE);
+    Double_t parBG[3];
+    fitFcnBG->GetParameters(parBG);
+    // Plot whole MC BG
+    TCanvas *cBGmc = new TCanvas(Form("InvMassFitMCBG_bin_%d_from_%d_to_%d_centr_BG", i+1, leftCentr, rightCentr),"PtHistBG",10,10,1200,900);
+    cBGmc->cd();
+    TH1D* hProfileInvMassBGMC = (TH1D*)hProfileInvMassXMC->Clone();
+    TF1 *fitFcnBGMC = new TF1("bgfunction", background, -0.03, 0.03,3);
+    fitFcnBGMC->SetParameters(parBG[0], parBG[1], parBG[2]);
+    hProfileInvMassBGMC->Draw();
+    fitFcnBGMC->Draw("same");
+    gROOT->SetBatch(kFALSE);
+    gPad->Update();
+    cBGmc->Update();
+    cBGmc->Write();
+    gROOT->SetBatch(kTRUE);
+
+    // Bin subtraction method
+    Double_t signal[2] = {0, 0};
+    TH1D* hProfileInvMassXBinCounting = (TH1D*)hProfileInvMassXMC->Clone();
+    hProfileInvMassXBinCounting->GetXaxis()->SetRange(leftSideBin, rightSideBin);
+    const Double_t binwidth = hProfileInvMassXBinCounting->GetXaxis()->GetBinWidth(5);
+    Double_t totCounts = hProfileInvMassXBinCounting->Integral();
+    Double_t leftEdge = hProfileInvMassXBinCounting->GetXaxis()->GetBinLowEdge(leftSideBin);
+    Double_t rightEdge = hProfileInvMassXBinCounting->GetXaxis()->GetBinLowEdge(rightSideBin + 1);
+    Double_t bgCounts = fitFcnBG->Integral(leftEdge, rightEdge)/binwidth;
+    ratio[i] = bgCounts/totCounts;
+  }
+  gROOT->SetBatch(kTRUE);
+  TGraphErrors *RatioBGClosure = new TGraphErrors(7, bins, ratio, error, error);
+  RatioBGClosure->SetTitle(Form("Fit/Counts from %d to %d mult", leftCentr, rightCentr));
+  RatioBGClosure->GetXaxis()->SetTitle("Bin number");
+  RatioBGClosure->GetYaxis()->SetTitle("Fit/Counts");
+  RatioBGClosure->SetMarkerStyle(20);
+  TCanvas *c2 = new TCanvas(Form("BG Fit/Counts for %s from %d to %d mult", inHist3D->GetName(), leftCentr, rightCentr),"BG",10,10,1200,900);
+  c2->cd();
+  RatioBGClosure->Draw("AP");
+  c2->Update();
+  gROOT->SetBatch(kFALSE);
+  c2->Write();
   dir->cd("/");
 }
 
@@ -1146,6 +1266,7 @@ void SignalMC(const Double_t *xPtBins, const Int_t nPtBins, TH3D *inHist3D, Int_
 
     Int_t leftSideBin = hProfileInvMassX->FindBin(leftRange);
     Int_t rightSideBin = hProfileInvMassX->FindBin(rightRange);
+    hProfileInvMassX->GetXaxis()->SetRange(leftSideBin, rightSideBin);
     Double_t signalMC = hProfileInvMassX->Integral(leftSideBin, rightSideBin);
     signal[i] = signalMC;
     std::cout << signalMC << " " << hProfileInvMassX->GetEntries() << std::endl;
@@ -1323,6 +1444,7 @@ void make_results(const Char_t* fileNameData, const Char_t* fileNameEff, const C
   if(isMC){
     SignalMC(xBinsMB, nPtBinsMB, hInvMassSumMC, 1, 11, hOmegaMBMC, outFile); // 1 - 11 means 0 - 100 %
     BGMC(xBinsMB, nPtBinsMB, hInvMassSumBGMC, 1, 11, outFile); // 1 - 11 means 0 - 100 %
+    SignalExtractionCombinedMC(xBinsMB, nPtBinsMB, hInvMassSum, 1, 11, hOmegaMBSideBand, outFile, hInvMassSumBGMC);
   }
 
   // Setup rapidity correction TF1

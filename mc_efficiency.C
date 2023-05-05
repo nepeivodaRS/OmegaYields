@@ -9,7 +9,7 @@
 
   mc_efficiency("./outputTreesDatLists/mc_tree_all.dat", "./outputEff/mc_Eff_24Feb.root", 0)
 
-  mc_efficiency("/disk/User_dirs/rnepeiv/omegaTreesMC/mc_tree_pp17j_pp18i_omega.root", "./outputEff/mc_Eff_25april_injected.root", 0)
+  mc_efficiency("/disk/User_dirs/rnepeiv/omegaTreesMC/mc_tree_pp17j_pp18i_omega.root", "./outputEff/mc_Eff_5may_injected.root", 0)
 
   mc_efficiency("/disk/User_dirs/rnepeiv/omegaTreesMC/mc_tree_pp17j_pp18i_omega.root", "./outputEff/mc_Eff_28Feb_good_binning_injected.root", 0)
 

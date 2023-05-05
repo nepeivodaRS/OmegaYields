@@ -4,7 +4,7 @@
   .L closureAndDiffRecComp.C
 
   closure_inv_mass("./outputPtHists/PtHist_6april_data.root", "/Users/rnepeiv/workLund/PhD_work/OmegaYields/published_data/correctedspectrumfittedgfcorrphyseff_spectra23.root", "./outputClosure/SignalClosure_6april_data.root", 0)
-  closure_inv_mass("./outputPtHists/PtHist_6april_mc.root", "/Users/rnepeiv/workLund/PhD_work/OmegaYields/published_data/correctedspectrumfittedgfcorrphyseff_spectra23.root", "./outputClosure/SignalClosure_6april_mc.root", 1)
+  closure_inv_mass("./outputPtHists/PtHist_25april_mc.root", "/Users/rnepeiv/workLund/PhD_work/OmegaYields/published_data/correctedspectrumfittedgfcorrphyseff_spectra23.root", "./outputClosure/SignalClosure_25april_mc.root", 1)
   
  */
 TFile* FindFileFresh(const Char_t* fileName)
@@ -219,7 +219,7 @@ void closure_inv_mass(const Char_t* fileNameData, const Char_t* publishedData, c
     //cRecNumberOfCasc->ls();
     //cRecNumberOfCasc->Draw();
     // Get canvas of number of gen cascades
-    f->cd("PtFitHists_hOmegaInvMassVsPtTrueEffCorr_Omega_from_1_to_11_centr");
+    f->cd("PtSignalMCHists_hOmegaInvMassVsPtTrueEffCorr_Omega_from_1_to_11_centr");
     cGenNumberOfcasc = findCanvas(gDirectory, "Number_of_cascades_for_hOmegaInvMassVsPtTrueEffCorr_Omega_from_1_to_11_mult");
 
     // f->cd("CombinedPtFitHists_hOmegaInvMassVsPt_Omega_from_1_to_11_centr");

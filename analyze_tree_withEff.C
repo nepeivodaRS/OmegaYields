@@ -8,9 +8,9 @@
 
   .L analyze_tree_withEff.C+
 
-  analyze_tree_withEff("./outputTreesDatLists/mc_tree_all.dat", "./outputEff/mc_Eff_25april_injected.root", "./outputAnal/mc_26april_effCorr.root", 0, 1)
+  analyze_tree_withEff("./outputTreesDatLists/mc_tree_all.dat", "./outputEff/mc_Eff_5may_injected.root", "./outputAnal/mc_5may_effCorr.root", 0, 1)
 
-  analyze_tree_withEff("./outputTreesDatLists/data_tree_all.dat", "./outputEff/mc_Eff_25april_injected.root", "./outputAnal/data_25april_effCorr.root", 0, 0)
+  analyze_tree_withEff("./outputTreesDatLists/data_tree_all.dat", "./outputEff/mc_Eff_5may_injected.root", "./outputAnal/data_5may_effCorr.root", 0, 0)
 */
 
 void InitHists(){

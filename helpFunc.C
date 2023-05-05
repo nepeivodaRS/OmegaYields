@@ -237,24 +237,25 @@ Bool_t CheckCascStandardCuts(AliAnalysisPIDCascade* cascade) {
     return kFALSE;
   // hCascStat->Fill("K TOF Standard", 1);
 
-  const Double_t CPA_thr = TMath::Cos(TMath::ATan(0.211/1.5) + 0.03);
+  // const Double_t CPA_thr = TMath::Cos(TMath::ATan(0.211/1.5) + 0.03);
+  // 0.97/CPA_thr*TMath::Cos(TMath::ATan(0.211/v0->GetPt()) + 0.03)
 
   // Topo cuts
-  if(cascPA < 0.97 || 
+  if(cascPA < 0.98 || 
     cascR < 0.6 || cascR > 100 ||
     posDCA < 0.03 ||
     negDCA < 0.03 ||
     cascade->GetCascDCA() > 1.0 ||
     TMath::Abs(dMassLambda) > 0.006 ||
     v0->GetDCAV0Daughters() > 1.6 ||
-    v0->GetV0CosinePA() < 0.97/CPA_thr*TMath::Cos(TMath::ATan(0.211/v0->GetPt()) + 0.03) ||
+    v0->GetV0CosinePA() < 0.98 ||
     v0->GetRadius() < 1.4 || v0->GetRadius() > 100 ||
     v0->GetDCAPV() < 0.07 ||
     bachDCA < 0.05 ||
     cascade->GetCascRadius()/cascade->GetPtCasc() > 15 ||
-    v0->GetRadius()/cascade->GetPtCasc() > 40)
-    //cascade->GetCascDCAPV() > 1.0 ||
-    //cascade->GetV0DCA() > 10)
+    v0->GetRadius()/cascade->GetPtCasc() > 40 ||
+    cascade->GetCascDCAPV() > 1.0 ||
+    cascade->GetV0DCA() > 10)
     return kFALSE;
   return kTRUE;
 }
